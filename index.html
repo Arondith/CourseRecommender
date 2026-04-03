@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CourseMatch - Login</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body.auth-page {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .wrapper {
+      width: 100%;
+      max-width: 920px;
+      min-height: 540px;
+      display: flex;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 24px 64px rgba(100,60,160,0.35);
+      animation: slideUp 0.45s ease;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(28px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Left Panel ── */
+    .left {
+      flex: 1;
+      background: linear-gradient(160deg, #5a6fd6 0%, #6b46c1 100%);
+      color: white;
+      padding: 56px 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .left::before {
+      content: '';
+      position: absolute;
+      width: 380px;
+      height: 380px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.06);
+      top: -120px;
+      right: -100px;
+    }
+
+    .left::after {
+      content: '';
+      position: absolute;
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.04);
+      bottom: -80px;
+      left: -60px;
+    }
+
+    .logo {
+      margin-bottom: 32px;
+      position: relative;
+    }
+
+    .logo img {
+      width: 400px;
+      height: auto;
+      object-fit: contain;
+      mix-blend-mode: multiply;
+      filter: brightness(1.05) contrast(1.05);
+    }
+
+    .left h1 {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      position: relative;
+      line-height: 1.2;
+    }
+
+    .left p {
+      font-size: 15px;
+      opacity: 0.82;
+      line-height: 1.75;
+      position: relative;
+      max-width: 320px;
+    }
+
+    .left-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 20px;
+      margin-bottom: 24px;
+      position: relative;
+      width: fit-content;
+    }
+
+    /* ── Right Panel ── */
+    .right {
+      flex: 1;
+      background: white;
+      padding: 56px 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .form-box { width: 100%; max-width: 360px; }
+
+    .form-title {
+      font-size: 26px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 6px;
+    }
+
+    .form-sub {
+      font-size: 14px;
+      color: #8888aa;
+      margin-bottom: 32px;
+    }
+
+    .input-group {
+      position: relative;
+      margin-bottom: 16px;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 13px 14px 13px 44px;
+      border-radius: 10px;
+      border: 1.5px solid #e8eaf6;
+      outline: none;
+      font-size: 14px;
+      font-family: inherit;
+      color: #1a1a2e;
+      background: #f7f8ff;
+      transition: all 0.2s;
+    }
+
+    .input-group input:focus {
+      border-color: #667eea;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(102,126,234,0.12);
+    }
+
+    .input-group span {
+      position: absolute;
+      left: 14px;
+      top: 14px;
+      font-size: 16px;
+      pointer-events: none;
+    }
+
+    /* ── Forgot Password ── */
+    .forgot-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: -8px;
+      margin-bottom: 18px;
+    }
+
+    .forgot-link {
+      font-size: 13px;
+      font-weight: 600;
+      color: #667eea;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .forgot-link:hover { color: #764ba2; }
+
+    .login-btn {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.25s;
+      margin-top: 4px;
+      box-shadow: 0 4px 16px rgba(102,126,234,0.35);
+      letter-spacing: 0.2px;
+    }
+
+    .login-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(102,126,234,0.45);
+    }
+
+    .login-btn:active { transform: translateY(0); }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 20px 0;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #e8eaf6;
+    }
+
+    .divider span { font-size: 12px; color: #aaaacc; }
+
+    .links {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      font-size: 14px;
+      text-align: center;
+      color: #8888aa;
+    }
+
+    .links a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+
+    .links a:hover { color: #764ba2; }
+
+    .admin-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px;
+      border: 1.5px solid #e8eaf6;
+      border-radius: 10px;
+      color: #8888aa;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .admin-link:hover {
+      border-color: #667eea;
+      color: #667eea;
+      background: #f7f8ff;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .left { display: none; }
+      .wrapper { border-radius: 20px; }
+      .right { padding: 40px 28px; }
+    }
+  </style>
+</head>
+<body class="auth-page">
+
+<div class="wrapper">
+
+  <!-- Left Section -->
+  <div class="left">
+    <div class="logo">
+      <img src="images/logo.png" alt="CourseMatch Logo">
+    </div>
+    <div class="left-badge">✨ Smart course suggestions tailored to your goals</div>
+    <h1>Find Your Perfect College Program</h1>
+    <p>
+      CourseMatch uses your personality, interests, and strengths to recommend
+      the right college program — so you can make the best decision for your future.
+    </p>
+  </div>
+
+  <!-- Right Section -->
+  <div class="right">
+    <div class="form-box">
+
+      <div class="form-title">Welcome back 👋</div>
+      <div class="form-sub">Sign in to access your career dashboard</div>
+
+      <div class="input-group">
+        <span>📧</span>
+        <input id="email" type="email" placeholder="Email address" autocomplete="email">
+      </div>
+
+      <div class="input-group">
+        <span>🔒</span>
+        <input id="password" type="password" placeholder="Password" autocomplete="current-password">
+      </div>
+
+      <!-- Forgot Password -->
+      <div class="forgot-row">
+        <a href="forgot-password.html" class="forgot-link">Forgot password?</a>
+      </div>
+
+      <button class="login-btn" onclick="login()">Sign In</button>
+
+      <div class="divider"><span>or</span></div>
+
+      <div class="links">
+        <p>Don't have an account? <a href="register.html">Create one free</a></p>
+        <a href="admin-login.html" class="admin-link">🔐 Admin Login</a>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

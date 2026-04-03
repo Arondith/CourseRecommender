@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Career Results</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="chart.js"></script>
+  <style>
+    .content { margin-left: 240px; }
+
+    /* ── Not-ready banner ── */
+    .not-ready-banner {
+      max-width: 560px; margin: 60px auto; text-align: center;
+      padding: 48px 40px; border-radius: 20px; background: white;
+      box-shadow: 0 8px 32px rgba(102,126,234,0.1);
+      border: 1px solid #e8eaf6;
+    }
+    .not-ready-banner .icon { font-size: 52px; margin-bottom: 16px; }
+    .not-ready-banner h2 { font-size: 22px; font-weight: 700; color: #1a1a2e; margin-bottom: 10px; }
+    .not-ready-banner p  { color: #8888aa; font-size: 15px; margin-bottom: 28px; line-height: 1.6; }
+    .not-ready-banner a {
+      display: inline-block; padding: 12px 32px; border-radius: 10px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white; font-weight: 700; font-size: 15px; text-decoration: none;
+      box-shadow: 0 4px 14px rgba(102,126,234,0.35); transition: opacity 0.2s;
+    }
+    .not-ready-banner a:hover { opacity: 0.88; }
+  </style>
+</head>
+
+<body>
+
+<!-- script.js MUST load first — it defines BASE -->
+<script src="script.js"></script>
+
+<script>
+// Fade-in — own block so throw in later blocks never stops it
+document.body.style.opacity = 0;
+window.onload = () => {
+  document.body.style.transition = "opacity 0.5s";
+  document.body.style.opacity = 1;
+};
+</script>
+
+<script>
+let user = JSON.parse(sessionStorage.getItem("currentUser"));
+
+// Not logged in → go to login
+if (!user) {
+  window.location = BASE + "index.html";
+  throw new Error("No session");
+}
+
+// Logged in but no assessment → show banner (no redirect)
+if (!user.riasec) {
+  document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById("notReadyBanner").style.display = "block";
+  });
+  // Don't throw — let the page finish rendering so the banner shows
+}
+</script>
+
+<div class="app">
+
+  <div class="sidebar">
+    <h2>🎓 CourseMatch</h2>
+    <a href="#" onclick="window.location = BASE + 'dashboard.html'; return false;"><span>📊</span> Assessment</a>
+    <a href="#" onclick="window.location = BASE + 'result.html'; return false;" class="active"><span>🎯</span> Recommendations</a>
+    <a href="#" onclick="logout()"><span>🚪</span> Logout</a>
+  </div>
+
+  <div class="content">
+
+    <div class="page-header">
+      <h1>Your Career Report</h1>
+      <p>Based on your personality assessment</p>
+    </div>
+
+    <!-- Shown only when assessment is incomplete -->
+    <div class="not-ready-banner" id="notReadyBanner" style="display:none;">
+      <div class="icon">📋</div>
+      <h2>Assessment Not Yet Completed</h2>
+      <p>You need to finish the personality assessment before your course recommendations can be generated. It only takes a few minutes!</p>
+      <a href="#" onclick="window.location = BASE + 'dashboard.html'; return false;">Take the Assessment →</a>
+    </div>
+
+    <!-- Shown only when results are ready -->
+    <div id="resultsContainer" style="display:none;">
+
+      <div class="card">
+        <h3>Your Personality Insight</h3>
+        <p id="personalityInsight"></p>
+      </div>
+
+      <div class="card">
+        <h3>Your Personality Profile</h3>
+        <canvas id="riasecChart"></canvas>
+      </div>
+
+      <div class="card">
+        <h3>Recommended NDMU Programs</h3>
+        <div id="courseContainer"></div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<script>
+// Only run results logic if assessment is done
+if (user && user.riasec) {
+  document.getElementById("resultsContainer").style.display = "block";
+
+  let score = user.riasec;
+
+  const TRAIT_MIN   = 5;
+  const TRAIT_MAX   = 25;
+  const TRAIT_RANGE = TRAIT_MAX - TRAIT_MIN;
+  const traitKeys   = ["R","I","A","S","E","C"];
+
+  const norm = {};
+  for (let t of traitKeys) {
+    norm[t] = Math.max(0, Math.min(1, (score[t] - TRAIT_MIN) / TRAIT_RANGE));
+  }
+
+  const avgNorm = traitKeys.reduce((sum, t) => sum + norm[t], 0) / traitKeys.length;
+  const rel = {};
+  for (let t of traitKeys) {
+    rel[t] = norm[t] - avgNorm;
+  }
+
+  // ── NDMU-aligned personality insights ──
+  const insightText = {
+    R: "You are hands-on and technically inclined — you enjoy building, repairing, and working with real systems. NDMU's engineering and technology programs are a natural fit for your practical strengths.",
+    I: "You are analytical and driven by curiosity. You enjoy researching, problem-solving, and understanding how things work at a deeper level. NDMU's science, computing, and mathematics programs will challenge and reward your inquisitive mind.",
+    A: "You are imaginative and expressive. You communicate ideas with clarity and creativity through writing, media, or design. NDMU's communication, English, and education programs offer the creative space you thrive in.",
+    S: "You are compassionate and people-focused. You find meaning in helping, teaching, and supporting others. NDMU's nursing, social work, and education programs align with your calling to serve.",
+    E: "You are confident, driven, and persuasive. You enjoy leading teams, taking initiative, and turning ideas into action. NDMU's business, management, and entrepreneurship programs are built for your enterprising spirit.",
+    C: "You are precise, organized, and detail-oriented. You prefer structured environments where accuracy and order matter. NDMU's accountancy, finance, and office administration programs are an excellent match for your methodical strengths."
+  };
+
+  document.getElementById("personalityInsight").innerText = insightText[user.personality];
+
+  new Chart(document.getElementById("riasecChart"), {
+    type: "radar",
+    data: {
+      labels: ["Realistic","Investigative","Artistic","Social","Enterprising","Conventional"],
+      datasets: [{
+        label: "Your Profile",
+        data: [score.R, score.I, score.A, score.S, score.E, score.C],
+        backgroundColor: "rgba(102,126,234,0.15)",
+        borderColor: "#667eea",
+        pointBackgroundColor: "#764ba2"
+      }]
+    },
+    options: {
+      scales: {
+        r: {
+          min: TRAIT_MIN,
+          max: TRAIT_MAX,
+          ticks: { stepSize: 5 }
+        }
+      }
+    }
+  });
+
+  const courses = [
+    // ── CEAC ──
+    { name: "BS Computer Science",                college: "CEAC", primary: "I", traits: { I:0.6, C:0.4 } },
+    { name: "BS Information Technology",          college: "CEAC", primary: "I", traits: { I:0.4, C:0.4, R:0.2 } },
+    { name: "BS Computer Engineering",            college: "CEAC", primary: "I", traits: { I:0.5, R:0.3, C:0.2 } },
+    { name: "BS Civil Engineering",               college: "CEAC", primary: "R", traits: { R:0.5, I:0.3, C:0.2 } },
+    { name: "BS Electrical Engineering",          college: "CEAC", primary: "R", traits: { R:0.4, I:0.4, C:0.2 } },
+    { name: "BS Electronics Engineering",         college: "CEAC", primary: "I", traits: { I:0.5, R:0.3, C:0.2 } },
+    { name: "BS Architecture",                    college: "CEAC", primary: "A", traits: { A:0.5, R:0.3, I:0.2 } },
+    { name: "BS Library and Information Science", college: "CEAC", primary: "C", traits: { C:0.5, I:0.3, S:0.2 } },
+    // ── CAS ──
+    { name: "BA Philosophy",                      college: "CAS",  primary: "I", traits: { I:0.5, A:0.3, S:0.2 } },
+    { name: "BA Psychology",                      college: "CAS",  primary: "S", traits: { S:0.5, I:0.3, A:0.2 } },
+    { name: "BA Political Science",               college: "CAS",  primary: "E", traits: { E:0.4, S:0.3, I:0.3 } },
+    { name: "BA Communication",                   college: "CAS",  primary: "A", traits: { A:0.5, E:0.3, S:0.2 } },
+    { name: "BS Biology",                         college: "CAS",  primary: "I", traits: { I:0.6, R:0.2, S:0.2 } },
+    { name: "BS Chemistry",                       college: "CAS",  primary: "I", traits: { I:0.6, R:0.2, C:0.2 } },
+    { name: "BS Environmental Science",           college: "CAS",  primary: "I", traits: { I:0.4, R:0.3, S:0.3 } },
+    { name: "BS Criminology",                     college: "CAS",  primary: "S", traits: { S:0.3, R:0.3, I:0.2, E:0.2 } },
+    { name: "BS Medical Technology",              college: "CAS",  primary: "I", traits: { I:0.5, C:0.3, S:0.2 } },
+    { name: "BS Nursing",                         college: "CAS",  primary: "S", traits: { S:0.6, I:0.2, R:0.2 } },
+    { name: "BS Social Work",                     college: "CAS",  primary: "S", traits: { S:0.6, E:0.2, A:0.2 } },
+    // ── CBA ──
+    { name: "BS Accountancy",                     college: "CBA",  primary: "C", traits: { C:0.6, I:0.2, E:0.2 } },
+    { name: "BS Management Accounting",           college: "CBA",  primary: "C", traits: { C:0.5, E:0.3, I:0.2 } },
+    { name: "BSBA – Human Resource Management",   college: "CBA",  primary: "E", traits: { E:0.4, S:0.4, C:0.2 } },
+    { name: "BSBA – Financial Management",        college: "CBA",  primary: "C", traits: { C:0.4, E:0.3, I:0.3 } },
+    { name: "BSBA – Marketing Management",        college: "CBA",  primary: "E", traits: { E:0.5, A:0.3, S:0.2 } },
+    { name: "BS Hospitality Management",          college: "CBA",  primary: "E", traits: { E:0.4, S:0.4, A:0.2 } },
+    // ── CED ──
+    { name: "Bachelor of Elementary Education",    college: "CED", primary: "S", traits: { S:0.6, A:0.2, C:0.2 } },
+    { name: "BSEd – Major in English",             college: "CED", primary: "A", traits: { A:0.4, S:0.4, I:0.2 } },
+    { name: "BSEd – Major in Filipino",            college: "CED", primary: "A", traits: { A:0.4, S:0.4, I:0.2 } },
+    { name: "BSEd – Major in Mathematics",         college: "CED", primary: "I", traits: { I:0.4, C:0.4, S:0.2 } },
+    { name: "BSEd – Major in Religious Education", college: "CED", primary: "S", traits: { S:0.5, A:0.3, I:0.2 } },
+    { name: "BSEd – Major in Science",             college: "CED", primary: "I", traits: { I:0.5, S:0.3, R:0.2 } },
+    { name: "BSEd – Major in Social Studies",      college: "CED", primary: "S", traits: { S:0.4, E:0.3, I:0.3 } },
+    { name: "Bachelor of Physical Education",      college: "CED", primary: "R", traits: { R:0.5, S:0.3, E:0.2 } },
+    // ── Law ──
+    { name: "Bachelor of Laws (LLB)",              college: "Law", primary: "E", traits: { E:0.5, I:0.3, S:0.2 } },
+  ];
+
+  function cosineSimilarity(userVec, courseVec) {
+    let dot = 0, magU = 0, magC = 0;
+    for (let i = 0; i < traitKeys.length; i++) {
+      dot  += userVec[i] * courseVec[i];
+      magU += userVec[i] ** 2;
+      magC += courseVec[i] ** 2;
+    }
+    if (magU === 0 || magC === 0) return 0;
+    return dot / (Math.sqrt(magU) * Math.sqrt(magC));
+  }
+
+  function rankVector(valueObj) {
+    const sorted = traitKeys.slice().sort((a, b) => (valueObj[b] || 0) - (valueObj[a] || 0));
+    const vec = {};
+    sorted.forEach((t, i) => { vec[t] = 1 / (i + 1); });
+    return vec;
+  }
+
+  function match(course) {
+    const userRelVec    = traitKeys.map(t => Math.max(0, rel[t]));
+    const courseWeights = traitKeys.map(t => course.traits[t] || 0);
+    const cosine = cosineSimilarity(userRelVec, courseWeights);
+
+    const userRank      = rankVector(rel);
+    const courseRank    = rankVector(course.traits);
+    const userRankVec   = traitKeys.map(t => userRank[t]   || 0);
+    const courseRankVec = traitKeys.map(t => courseRank[t] || 0);
+    const rankSim = cosineSimilarity(userRankVec, courseRankVec);
+
+    let absFit = 0;
+    for (let t in course.traits) absFit += course.traits[t] * norm[t];
+
+    let blended = (cosine * 0.45) + (rankSim * 0.35) + (absFit * 0.20);
+
+    if (norm[course.primary] < 0.33) {
+      blended *= 0.45;
+    } else if (rel[course.primary] < 0) {
+      blended *= (0.75 + 0.25 * (norm[course.primary] / 0.33));
+    }
+
+    return Math.max(0, Math.min(1, blended));
+  }
+
+  function explainCourse(course) {
+    const traitDesc = {
+      R: "hands-on and technical skills",
+      I: "analytical and research strengths",
+      A: "creative and expressive abilities",
+      S: "people-centered and caring nature",
+      E: "leadership and enterprising mindset",
+      C: "structured and detail-oriented approach"
+    };
+    let overlap = Object.keys(course.traits)
+      .filter(t => rel[t] > 0 && course.traits[t] >= 0.2)
+      .sort((a, b) => (course.traits[b] * rel[b]) - (course.traits[a] * rel[a]))
+      .slice(0, 2)
+      .map(t => traitDesc[t]);
+    if (overlap.length === 0) return "This NDMU program can help you grow and develop strengths in new directions.";
+    return "Your " + overlap.join(" and ") + " make you a strong candidate for this NDMU program.";
+  }
+
+  const collegeLabels = {
+    CEAC: "College of Engineering, Architecture & Computing",
+    CAS:  "College of Arts and Sciences",
+    CBA:  "College of Business Administration",
+    CED:  "College of Education",
+    Law:  "College of Law"
+  };
+
+  const results = courses
+    .map(c => ({ ...c, matchScore: match(c) }))
+    .sort((a, b) => b.matchScore - a.matchScore);
+
+  const container = document.getElementById("courseContainer");
+
+  results.slice(0, 6).forEach((c, i) => {
+    let percent = Math.round(c.matchScore * 100);
+    let label = "Good Match";
+    if (percent >= 85) label = "Excellent Match ⭐";
+    else if (percent >= 70) label = "Strong Match";
+    let badge = i === 0 ? "🏆 Best Match" : "";
+
+    container.innerHTML += `
+      <div class="course-card">
+        <h3>${c.name}</h3>
+        <p style="font-size:0.8em; color:#888; margin:2px 0 6px;">${collegeLabels[c.college] || c.college}</p>
+        <p class="confidence">${badge} ${label}</p>
+        <p>Compatibility Score: ${percent}%</p>
+        <div class="progress">
+          <div style="height:100%; width:${percent}%; background:linear-gradient(90deg,#667eea,#764ba2); border-radius:20px; transition:width 0.6s ease;"></div>
+        </div>
+        <p style="margin-top:10px; font-size:0.9em; color:#555;">${explainCourse(c)}</p>
+      </div>
+    `;
+  });
+}
+</script>
+
+</body>
+</html>

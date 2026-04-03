@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Career Assessment</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .content { margin-left: 240px; }
+    body { opacity: 0; transition: opacity 0.4s; }
+
+    .page-header h1 { font-size: 26px; font-weight: 700; color: #1a1a2e; margin-bottom: 6px; }
+    .page-header p  { color: #8888aa; font-size: 15px; margin-bottom: 32px; }
+
+    .assessment-card {
+      max-width: 720px; margin: 0 auto; text-align: center;
+      padding: 40px; border-radius: 20px; background: white;
+      box-shadow: 0 8px 32px rgba(102,126,234,0.1);
+      border: 1px solid #e8eaf6;
+    }
+
+    /* ── Top meta row ── */
+    .meta-row {
+      display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 14px;
+    }
+    .question-counter {
+      font-size: 12px; font-weight: 700; color: #8888aa;
+      text-transform: uppercase; letter-spacing: 1px;
+    }
+    .section-indicator {
+      font-size: 11px; font-weight: 700; color: #764ba2;
+      background: #f3eeff; border-radius: 20px; padding: 3px 10px;
+    }
+
+    /* ── Progress bar ── */
+    .progress {
+      width: 100%; height: 6px; background: #eef0fd;
+      border-radius: 20px; margin-bottom: 28px; overflow: hidden;
+    }
+    #progressBar {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      border-radius: 20px; transition: width 0.4s ease;
+    }
+
+    /* ── Trait badge ── */
+    .category-badge {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      color: #667eea; background: #eef0fd; border-radius: 20px;
+      padding: 4px 14px; letter-spacing: 0.5px;
+      text-transform: uppercase; margin-bottom: 20px;
+    }
+
+    /* ── Question ── */
+    #questionText {
+      font-size: 20px; font-weight: 700; color: #1a1a2e;
+      line-height: 1.6; margin: 0 0 14px; min-height: 64px;
+    }
+    #answer-msg {
+      font-size: 13px; color: #e53e3e;
+      min-height: 18px; margin-bottom: 6px;
+    }
+
+    /* ── Scale label ── */
+    .scale-label {
+      display: flex; justify-content: space-between;
+      font-size: 11px; font-weight: 700; color: #aaa;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      margin-bottom: 8px; padding: 0 4px;
+    }
+
+    /* ── Likert buttons ── */
+    .answers { display: flex; gap: 10px; justify-content: center; margin: 12px 0 28px; }
+
+    .answers button {
+      width: 78px; padding: 14px 6px; border: 2px solid #e8eaf6;
+      border-radius: 14px; font-size: 18px; font-weight: 800;
+      font-family: inherit; cursor: pointer; background: #f7f8ff;
+      color: #4a4a6a; display: flex; flex-direction: column;
+      align-items: center; gap: 6px; transition: all 0.2s; line-height: 1;
+    }
+    .answers button span {
+      font-size: 10px; font-weight: 600; color: #aaa;
+      line-height: 1.3; text-align: center;
+    }
+    .answers button:hover {
+      background: #eef0fd; border-color: #667eea; color: #667eea;
+      transform: translateY(-3px); box-shadow: 0 6px 16px rgba(102,126,234,0.15);
+    }
+    .answers button:hover span { color: #667eea; }
+
+    /* Color-coded scale */
+    .answers button:nth-child(1) { border-color: #fca5a5; }
+    .answers button:nth-child(1):hover { border-color: #dc2626; color:#dc2626; background:#fef2f2; }
+    .answers button:nth-child(2) { border-color: #fdba74; }
+    .answers button:nth-child(2):hover { border-color: #ea580c; color:#ea580c; background:#fff7ed; }
+    .answers button:nth-child(3) { border-color: #d1d5db; }
+    .answers button:nth-child(3):hover { border-color: #6b7280; color:#6b7280; background:#f9fafb; }
+    .answers button:nth-child(4) { border-color: #86efac; }
+    .answers button:nth-child(4):hover { border-color: #16a34a; color:#16a34a; background:#f0fdf4; }
+    .answers button:nth-child(5) { border-color: #93c5fd; }
+    .answers button:nth-child(5):hover { border-color: #2563eb; color:#2563eb; background:#eff6ff; }
+
+    .answers button.selected {
+      background: linear-gradient(135deg, #667eea, #764ba2) !important;
+      border-color: transparent !important; color: white !important;
+      box-shadow: 0 6px 18px rgba(102,126,234,0.4); transform: translateY(-2px);
+    }
+    .answers button.selected span { color: rgba(255,255,255,0.85) !important; }
+
+    /* ── Nav ── */
+    .nav-buttons {
+      display: flex; justify-content: space-between; gap: 12px;
+      border-top: 1px solid #e8eaf6; padding-top: 22px;
+    }
+    .nav-buttons button {
+      width: 130px; background: #f7f8ff; color: #4a4a6a;
+      border: 1.5px solid #e8eaf6; font-size: 14px; font-weight: 600;
+      border-radius: 10px; padding: 10px; cursor: pointer; transition: all 0.2s;
+    }
+    .nav-buttons button:hover {
+      background: #eef0fd; border-color: #667eea; color: #667eea;
+      transform: translateY(-1px); box-shadow: 0 3px 10px rgba(102,126,234,0.12);
+    }
+    #finishBtn {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white; border-color: transparent;
+    }
+    #finishBtn:hover {
+      opacity: 0.9; color: white; border-color: transparent;
+      box-shadow: 0 4px 14px rgba(102,126,234,0.4);
+    }
+
+    /* ── Dot progress tracker ── */
+    .dot-tracker {
+      display: flex; gap: 5px; justify-content: center;
+      flex-wrap: wrap; margin-bottom: 22px;
+    }
+    .dot {
+      width: 9px; height: 9px; border-radius: 50%;
+      background: #e8eaf6; transition: background 0.3s;
+    }
+    .dot.answered { background: #667eea; }
+    .dot.current  { background: #764ba2; transform: scale(1.3); }
+  </style>
+</head>
+
+<body>
+<div class="app">
+
+  <div class="sidebar">
+    <h2>🎓 CourseMatch</h2>
+    <a href="dashboard.html" class="active"><span>📊</span> Assessment</a>
+    <a href="#" onclick="window.location = BASE + 'result.html'; return false;"><span>🎯</span> Recommendations</a>
+    <a href="#" onclick="logout()"><span>🚪</span> Logout</a>
+  </div>
+
+  <div class="content">
+
+    <div class="page-header">
+      <h1 id="welcome"></h1>
+      <p>Rate each statement honestly — there are no right or wrong answers.</p>
+    </div>
+
+    <div class="card assessment-card">
+
+      <div class="meta-row">
+        <div class="question-counter" id="questionCounter">Question 1 of 30</div>
+        <div class="section-indicator" id="sectionIndicator"></div>
+      </div>
+
+      <div class="progress">
+        <div id="progressBar"></div>
+      </div>
+
+      <!-- Dot tracker -->
+      <div class="dot-tracker" id="dotTracker"></div>
+
+      <div class="category-badge" id="categoryBadge"></div>
+
+      <h2 id="questionText"></h2>
+
+      <div id="answer-msg"></div>
+
+      <div class="scale-label">
+        <span>Strongly Disagree</span>
+        <span>Strongly Agree</span>
+      </div>
+
+      <div class="answers">
+        <button onclick="selectAnswer(event,1)">1<span>Strongly<br>Disagree</span></button>
+        <button onclick="selectAnswer(event,2)">2<span>Disagree</span></button>
+        <button onclick="selectAnswer(event,3)">3<span>Neutral</span></button>
+        <button onclick="selectAnswer(event,4)">4<span>Agree</span></button>
+        <button onclick="selectAnswer(event,5)">5<span>Strongly<br>Agree</span></button>
+      </div>
+
+      <div class="nav-buttons">
+        <button onclick="prevQuestion()">← Previous</button>
+        <button id="finishBtn" onclick="nextQuestion()" style="display:none;">Submit ✓</button>
+        <button id="nextBtn" onclick="nextQuestion()">Next →</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+<script>
+
+let user = JSON.parse(sessionStorage.getItem("currentUser"));
+if (!user) { window.location = BASE + "index.html"; }
+else { document.getElementById("welcome").innerText = "Welcome back, " + user.name + " 👋"; }
+
+const categoryNames = {
+  R: "🔧 Realistic",
+  I: "🔬 Investigative",
+  A: "🎨 Artistic",
+  S: "🤝 Social",
+  E: "💼 Enterprising",
+  C: "📋 Conventional"
+};
+
+const categoryDesc = {
+  R: "Hands-on & Technical",
+  I: "Analytical & Scientific",
+  A: "Creative & Expressive",
+  S: "Helping & Teaching",
+  E: "Leading & Persuading",
+  C: "Organized & Detail-oriented"
+};
+
+const questionBank = [
+
+  // ── REALISTIC (R) — Engineering, Technology ──
+  { q: "I enjoy doing hands-on activities like building, repairing, or assembling things.",            type:"R" },
+  { q: "I am interested in how machines, structures, or electronic devices work.",                     type:"R" },
+  { q: "I would enjoy a program that involves laboratory work, fieldwork, or technical projects.",     type:"R" },
+  { q: "I prefer working with tools, equipment, or physical materials rather than paperwork.",         type:"R" },
+  { q: "Courses in engineering, technology, or computer hardware interest me.",                        type:"R" },
+
+  // ── INVESTIGATIVE (I) — Science, CS, Math ──
+  { q: "I enjoy investigating why things happen and finding logical explanations.",                    type:"I" },
+  { q: "I like solving complex math or science problems.",                                             type:"I" },
+  { q: "I enjoy conducting research or experiments to discover new information.",                      type:"I" },
+  { q: "I prefer subjects that require deep thinking and analysis rather than memorization.",          type:"I" },
+  { q: "Courses in biology, chemistry, computer science, or mathematics appeal to me.",               type:"I" },
+
+  // ── ARTISTIC (A) — Communication, AB English ──
+  { q: "I enjoy expressing myself through writing, speaking, or other creative forms.",               type:"A" },
+  { q: "I like creating content such as articles, scripts, videos, or social media posts.",           type:"A" },
+  { q: "I am drawn to subjects like literature, journalism, or media production.",                    type:"A" },
+  { q: "I can communicate ideas clearly and persuasively through words or visuals.",                  type:"A" },
+  { q: "I would enjoy a program focused on storytelling, communication, or the arts.",                type:"A" },
+
+  // ── SOCIAL (S) — Education, Nursing, Social Work ──
+  { q: "I feel fulfilled when I help someone solve a personal or social problem.",                    type:"S" },
+  { q: "I enjoy teaching, tutoring, or explaining concepts to others.",                               type:"S" },
+  { q: "I am interested in health, wellness, and caring for people's physical needs.",                type:"S" },
+  { q: "I want a career where I make a direct positive impact on people's lives.",                    type:"S" },
+  { q: "Courses in education, nursing, or social work feel meaningful and purposeful to me.",         type:"S" },
+
+  // ── ENTERPRISING (E) — Business, Entrepreneurship ──
+  { q: "I enjoy taking charge and leading others toward a shared goal.",                              type:"E" },
+  { q: "I am confident pitching ideas, selling products, or persuading people.",                     type:"E" },
+  { q: "I like planning and organizing projects that involve managing people or resources.",          type:"E" },
+  { q: "I am motivated by starting something new and taking calculated risks.",                      type:"E" },
+  { q: "Courses in business management, marketing, or entrepreneurship excite me.",                  type:"E" },
+
+  // ── CONVENTIONAL (C) — Accountancy, Office Admin ──
+  { q: "I like organizing data, records, or files in a systematic way.",                             type:"C" },
+  { q: "I prefer tasks where there are clear rules, procedures, and expected outcomes.",              type:"C" },
+  { q: "I am careful and accurate when working with numbers, forms, or reports.",                    type:"C" },
+  { q: "I feel comfortable following detailed instructions and maintaining order.",                   type:"C" },
+  { q: "Courses in accounting, finance, or office administration appeal to me.",                     type:"C" },
+
+];
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+const questions = shuffle(questionBank);
+let current = 0;
+let answers  = new Array(questions.length).fill(null);
+
+const dotTracker = document.getElementById("dotTracker");
+questions.forEach((_, i) => {
+  const dot = document.createElement("div");
+  dot.className = "dot";
+  dot.id = "dot-" + i;
+  dotTracker.appendChild(dot);
+});
+
+function updateDots() {
+  questions.forEach((_, i) => {
+    const dot = document.getElementById("dot-" + i);
+    dot.className = "dot";
+    if (i === current)            dot.classList.add("current");
+    else if (answers[i] !== null) dot.classList.add("answered");
+  });
+}
+
+function loadQuestion() {
+  const q = questions[current];
+  document.getElementById("questionText").innerText     = q.q;
+  document.getElementById("categoryBadge").innerText    = categoryNames[q.type] + " — " + categoryDesc[q.type];
+  document.getElementById("questionCounter").innerText  = "Question " + (current + 1) + " of " + questions.length;
+  document.getElementById("sectionIndicator").innerText = (current + 1) + " / " + questions.length + " completed";
+  document.getElementById("progressBar").style.width    = ((current + 1) / questions.length * 100) + "%";
+  document.getElementById("answer-msg").textContent     = "";
+
+  document.getElementById("finishBtn").style.display = (current === questions.length - 1) ? "block" : "none";
+  document.getElementById("nextBtn").style.display   = (current === questions.length - 1) ? "none"  : "block";
+
+  document.querySelectorAll(".answers button").forEach(btn => btn.classList.remove("selected"));
+  if (answers[current] !== null) {
+    document.querySelectorAll(".answers button")[answers[current] - 1]?.classList.add("selected");
+  }
+
+  updateDots();
+}
+
+function selectAnswer(event, value) {
+  answers[current] = value;
+  document.querySelectorAll(".answers button").forEach(btn => btn.classList.remove("selected"));
+  event.currentTarget.classList.add("selected");
+  updateDots();
+  if (current < questions.length - 1) {
+    setTimeout(() => { nextQuestion(); }, 350);
+  }
+}
+
+function nextQuestion() {
+  if (answers[current] === null) {
+    document.getElementById("answer-msg").textContent = "Please select a rating before continuing.";
+    return;
+  }
+  document.getElementById("answer-msg").textContent = "";
+  if (current < questions.length - 1) {
+    current++; loadQuestion();
+  } else {
+    finishAssessment();
+  }
+}
+
+function prevQuestion() {
+  if (current > 0) { current--; loadQuestion(); }
+}
+
+async function finishAssessment() {
+  let score = { R:0, I:0, A:0, S:0, E:0, C:0 };
+  answers.forEach((val, i) => {
+    if (val !== null) score[questions[i].type] += val;
+  });
+
+  const sorted = Object.entries(score).sort((a, b) => b[1] - a[1]);
+  user.personality = sorted[0][0];
+  user.riasec      = score;
+  user.riasecMin   = 5;
+  user.riasecMax   = 25;
+
+  sessionStorage.setItem("currentUser", JSON.stringify(user));
+
+  // ── Save to DB so admin panel can see it ──
+  const fd = new FormData();
+  fd.append('action',      'save_attempt');
+  fd.append('personality', user.personality);
+  fd.append('riasec',      JSON.stringify(score));
+
+  try {
+   const res  = await fetch(BASE + 'admin_api.php', { method: 'POST', body: fd, credentials: 'same-origin' });
+    const data = await res.json();
+    if (!data.success) {
+      console.warn('Attempt not saved:', data.message);
+    }
+  } catch (e) {
+    console.warn('Save attempt failed:', e);
+  }
+
+  window.location = BASE + "result.html";
+}
+
+loadQuestion();
+
+</script>
+
+<script>
+window.onload = () => { document.body.style.opacity = 1; };
+</script>
+
+</body>
+</html>

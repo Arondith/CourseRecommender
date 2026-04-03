@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - CourseMatch</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body.auth-page {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .wrapper {
+      width: 100%;
+      max-width: 920px;
+      display: flex;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 24px 64px rgba(100,60,160,0.35);
+      animation: slideUp 0.45s ease;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(28px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Left Panel ── */
+    .left {
+      flex: 1;
+      background: linear-gradient(160deg, #5a6fd6 0%, #6b46c1 100%);
+      color: white;
+      padding: 56px 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .left::before {
+      content: '';
+      position: absolute;
+      width: 380px; height: 380px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.06);
+      top: -120px; right: -100px;
+    }
+
+    .left::after {
+      content: '';
+      position: absolute;
+      width: 260px; height: 260px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.04);
+      bottom: -80px; left: -60px;
+    }
+
+    .logo { margin-bottom: 32px; position: relative; }
+
+    .logo img {
+      width: 400px;
+      height: auto;
+      object-fit: contain;
+      mix-blend-mode: multiply;
+      filter: brightness(1.05) contrast(1.05);
+    }
+
+    .left-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 20px;
+      margin-bottom: 24px;
+      position: relative;
+      width: fit-content;
+    }
+
+    .left h1 {
+      font-size: 34px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      position: relative;
+      line-height: 1.2;
+    }
+
+    .left p {
+      font-size: 15px;
+      opacity: 0.82;
+      line-height: 1.75;
+      position: relative;
+      max-width: 320px;
+    }
+
+    /* ── Steps indicator ── */
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 36px;
+      position: relative;
+    }
+
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      opacity: 0.85;
+    }
+
+    .step-dot {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      border: 1.5px solid rgba(255,255,255,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .step-text { font-size: 14px; color: rgba(255,255,255,0.9); font-weight: 500; }
+
+    /* ── Right Panel ── */
+    .right {
+      flex: 1;
+      background: white;
+      padding: 48px 44px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      overflow-y: auto;
+    }
+
+    .form-box { width: 100%; max-width: 380px; }
+
+    .form-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 4px;
+    }
+
+    .form-sub {
+      font-size: 14px;
+      color: #8888aa;
+      margin-bottom: 28px;
+    }
+
+    /* ── Name row ── */
+    .name-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 0;
+    }
+
+    .name-row .input-group { flex: 1; min-width: 0; margin-bottom: 14px; }
+    .name-row .input-group.mid { flex: 0.75; }
+
+    /* ── Input groups ── */
+    .input-group {
+      position: relative;
+      margin-bottom: 14px;
+    }
+
+    .input-group input,
+    .input-group select {
+      width: 100%;
+      padding: 12px 14px 12px 42px;
+      border-radius: 10px;
+      border: 1.5px solid #e8eaf6;
+      outline: none;
+      font-size: 14px;
+      font-family: inherit;
+      color: #1a1a2e;
+      background: #f7f8ff;
+      transition: all 0.2s;
+    }
+
+    .name-row input {
+      font-size: 13px !important;
+      padding-left: 34px !important;
+    }
+
+    .input-group input:focus,
+    .input-group select:focus {
+      border-color: #667eea;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(102,126,234,0.12);
+    }
+
+    .input-group span {
+      position: absolute;
+      left: 13px;
+      top: 13px;
+      font-size: 15px;
+      pointer-events: none;
+    }
+
+    .name-row .input-group span {
+      font-size: 13px;
+      top: 13px;
+      left: 11px;
+    }
+
+    /* ── Password strength ── */
+    .strength-wrap { margin: -8px 0 14px; }
+
+    .strength-bar-track {
+      height: 5px;
+      background: #eef0fd;
+      border-radius: 20px;
+      overflow: hidden;
+      margin-bottom: 5px;
+    }
+
+    .strength-bar {
+      height: 100%;
+      width: 0%;
+      border-radius: 20px;
+      transition: width 0.3s ease, background 0.3s ease;
+    }
+
+    .strength-label {
+      font-size: 12px;
+      font-weight: 700;
+      min-height: 16px;
+    }
+
+    .strength-weak   { color: #e53e3e; }
+    .strength-fair   { color: #dd6b20; }
+    .strength-good   { color: #d69e2e; }
+    .strength-strong { color: #38a169; }
+
+    /* ── Register button ── */
+    .register-btn {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.25s;
+      margin-top: 4px;
+      box-shadow: 0 4px 16px rgba(102,126,234,0.35);
+      letter-spacing: 0.2px;
+    }
+
+    .register-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(102,126,234,0.45);
+    }
+
+    .register-btn:active { transform: translateY(0); }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 18px 0;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #e8eaf6;
+    }
+
+    .divider span { font-size: 12px; color: #aaaacc; }
+
+    .links {
+      text-align: center;
+      font-size: 14px;
+      color: #8888aa;
+    }
+
+    .links a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+
+    .links a:hover { color: #764ba2; }
+
+    /* ── Responsive ── */
+    @media (max-width: 680px) {
+      .left { display: none; }
+      .wrapper { border-radius: 20px; }
+      .right { padding: 36px 24px; }
+    }
+  </style>
+</head>
+<body class="auth-page">
+
+<div class="wrapper">
+
+  <!-- Left Section -->
+  <div class="left">
+    <div class="logo">
+      <img src="images/logo.png" alt="CourseMatch Logo">
+    </div>
+    <div class="left-badge">🎓 Free to Join</div>
+    <h1>Start Your Career Journey</h1>
+    <p>
+      Create your account and let CourseMatch guide you to the college program
+      that fits your personality and strengths.
+    </p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-dot">1</div>
+        <div class="step-text">Create your free account</div>
+      </div>
+      <div class="step">
+        <div class="step-dot">2</div>
+        <div class="step-text">Take the personality assessment</div>
+      </div>
+      <div class="step">
+        <div class="step-dot">3</div>
+        <div class="step-text">Get personalized program matches</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Section -->
+  <div class="right">
+    <div class="form-box">
+
+      <div class="form-title">Create Account</div>
+      <div class="form-sub">Fill in your details to get started</div>
+
+      <!-- Name Row -->
+      <div class="name-row">
+        <div class="input-group">
+          <span>👤</span>
+          <input id="first_name" placeholder="First Name *" autocomplete="given-name">
+        </div>
+        <div class="input-group mid">
+          <span>✏️</span>
+          <input id="middle_name" placeholder="Middle" autocomplete="additional-name">
+        </div>
+        <div class="input-group">
+          <span>👤</span>
+          <input id="last_name" placeholder="Last Name *" autocomplete="family-name">
+        </div>
+      </div>
+
+      <!-- Phone -->
+      <div class="input-group">
+        <span>📱</span>
+        <input id="phone" placeholder="Phone (09XXXXXXXXX) *" maxlength="13" autocomplete="tel">
+      </div>
+
+      <!-- Email -->
+      <div class="input-group">
+        <span>📧</span>
+        <input id="email" type="email" placeholder="Email address *" autocomplete="email">
+      </div>
+
+      <!-- Password -->
+      <div class="input-group">
+        <span>🔒</span>
+        <input id="password" type="password" placeholder="Password *"
+          oninput="checkStrength(this.value)" autocomplete="new-password">
+      </div>
+
+      <!-- Strength indicator -->
+      <div class="strength-wrap">
+        <div class="strength-bar-track">
+          <div class="strength-bar" id="strengthBar"></div>
+        </div>
+        <div class="strength-label" id="strengthLabel"></div>
+      </div>
+
+      <!-- Strand -->
+      <div class="input-group">
+        <span>🎓</span>
+        <label for="strand" class="sr-only">Select Strand</label>
+        <select id="strand" title="Select Strand">
+          <option value="">Select your strand *</option>
+          <option value="STEM">STEM — Science, Technology, Engineering & Math</option>
+          <option value="ABM">ABM — Accountancy, Business & Management</option>
+          <option value="HUMSS">HUMSS — Humanities & Social Sciences</option>
+        </select>
+      </div>
+
+      <button class="register-btn" onclick="register()">Create Account</button>
+
+      <div class="divider"><span>or</span></div>
+
+      <div class="links">
+        <p>Already have an account? <a href="index.html">Sign in</a></p>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script src="script.js"></script>
+<script>
+function checkStrength(val) {
+  const bar   = document.getElementById('strengthBar');
+  const label = document.getElementById('strengthLabel');
+
+  let score = 0;
+  if (val.length >= 8)   score++;
+  if (/[A-Z]/.test(val)) score++;
+  if (/[0-9]/.test(val)) score++;
+  if (/[\W_]/.test(val)) score++;
+
+  const levels = [
+    { label: '',       color: '#eef0fd', width: '0%'   },
+    { label: 'Weak',   color: '#e53e3e', width: '25%'  },
+    { label: 'Fair',   color: '#dd6b20', width: '50%'  },
+    { label: 'Good',   color: '#d69e2e', width: '75%'  },
+    { label: 'Strong', color: '#38a169', width: '100%' },
+  ];
+
+  const lvl = val.length === 0 ? levels[0] : levels[score];
+  bar.style.width      = lvl.width;
+  bar.style.background = lvl.color;
+  label.textContent    = val.length === 0 ? '' : lvl.label;
+  label.className      = 'strength-label ' +
+    (score === 1 ? 'strength-weak'   :
+     score === 2 ? 'strength-fair'   :
+     score === 3 ? 'strength-good'   :
+     score === 4 ? 'strength-strong' : '');
+}
+</script>
+</body>
+</html>

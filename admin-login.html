@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login - CourseMatch</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body.auth-page {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Decorative background circles */
+    body.auth-page::before {
+      content: '';
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.05);
+      top: -150px;
+      right: -100px;
+      pointer-events: none;
+    }
+
+    body.auth-page::after {
+      content: '';
+      position: absolute;
+      width: 350px;
+      height: 350px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.04);
+      bottom: -100px;
+      left: -80px;
+      pointer-events: none;
+    }
+
+    .admin-login-box {
+      background: white;
+      border-radius: 24px;
+      padding: 52px 44px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 24px 64px rgba(100,60,160,0.35);
+      position: relative;
+      z-index: 1;
+      animation: slideUp 0.4s ease;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .admin-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 6px 20px rgba(102,126,234,0.4);
+    }
+
+    .admin-badge {
+      display: inline-block;
+      background: #eef0fd;
+      color: #4c63d2;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      padding: 5px 14px;
+      border-radius: 20px;
+      margin-bottom: 14px;
+      text-transform: uppercase;
+    }
+
+    .admin-login-box h2 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 8px;
+    }
+
+    .admin-login-box p {
+      color: #8888aa;
+      font-size: 14px;
+      margin-bottom: 32px;
+      line-height: 1.6;
+    }
+
+    .input-group {
+      position: relative;
+      margin-bottom: 16px;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 13px 14px 13px 44px;
+      border-radius: 10px;
+      border: 1.5px solid #e8eaf6;
+      outline: none;
+      font-size: 14px;
+      font-family: inherit;
+      color: #1a1a2e;
+      background: #f7f8ff;
+      transition: all 0.2s;
+    }
+
+    .input-group input:focus {
+      border-color: #667eea;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(102,126,234,0.12);
+    }
+
+    .input-group span {
+      position: absolute;
+      left: 14px;
+      top: 14px;
+      font-size: 16px;
+      pointer-events: none;
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.25s;
+      margin-top: 6px;
+      box-shadow: 0 4px 16px rgba(102,126,234,0.35);
+      letter-spacing: 0.3px;
+    }
+
+    .login-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(102,126,234,0.45);
+    }
+
+    .login-btn:active {
+      transform: translateY(0);
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 24px 0 0;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #e8eaf6;
+    }
+
+    .divider span {
+      font-size: 12px;
+      color: #aaaacc;
+    }
+
+    .back-link {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 13px;
+      color: #8888aa;
+    }
+
+    .back-link a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+
+    .back-link a:hover { color: #764ba2; }
+  </style>
+</head>
+<body class="auth-page">
+
+<div class="admin-login-box">
+  <div class="admin-icon">🔐</div>
+  <div class="admin-badge">Admin Access</div>
+  <h2>Welcome back</h2>
+  <p>Sign in to access the CourseMatch admin panel and manage your system.</p>
+
+  <div class="input-group">
+    <span>👤</span>
+    <input id="adminUser" type="text" placeholder="Username" autocomplete="username">
+  </div>
+
+  <div class="input-group">
+    <span>🔒</span>
+    <input id="adminPass" type="password" placeholder="Password" autocomplete="current-password">
+  </div>
+
+  <button class="login-btn" onclick="adminLogin()">Login to Admin Panel</button>
+
+  <div class="divider"><span>or</span></div>
+
+  <div class="back-link">
+    <p><a href="index.html">← Back to Student Login</a></p>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

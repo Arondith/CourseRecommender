@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - CourseMatch</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ── Purple Sidebar Override ── */
+    .sidebar {
+      background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+      box-shadow: 4px 0 24px rgba(102,126,234,0.25);
+    }
+    .sidebar-logo { color: white; }
+    .sidebar nav a { color: rgba(255,255,255,0.75); }
+    .sidebar nav a:hover,
+    .sidebar nav a.active {
+      background: rgba(255,255,255,0.18);
+      color: white;
+    }
+    .sidebar-logout { border-top: 1px solid rgba(255,255,255,0.2); }
+    .sidebar-logout a { color: rgba(255,220,220,0.9); }
+    .sidebar-logout a:hover { background: rgba(255,100,100,0.15); }
+
+    /* ── Main ── */
+    .main {
+      margin-left: 240px;
+      flex: 1;
+      padding: 36px;
+      background: #f7f8ff;
+      min-height: 100vh;
+    }
+
+    .page-title { font-size: 24px; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; }
+    .page-sub   { color: #8888aa; font-size: 14px; margin-bottom: 28px; }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* ── Stat Cards ── */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: white; border-radius: 14px; padding: 24px;
+      box-shadow: 0 2px 12px rgba(102,126,234,0.08);
+      border: 1px solid #e8eaf6; position: relative; overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .stat-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0;
+      height: 3px; background: linear-gradient(90deg, #667eea, #764ba2);
+    }
+    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(102,126,234,0.15); }
+    .stat-card .label { font-size: 11px; font-weight: 700; color: #8888aa; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px; }
+    .stat-card .value {
+      font-size: 38px; font-weight: 700;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; line-height: 1; margin-bottom: 6px;
+    }
+    .stat-card .sub { font-size: 12px; color: #aaaacc; }
+
+    /* ── Tables ── */
+    .table-wrap {
+      background: white; border-radius: 14px;
+      box-shadow: 0 2px 12px rgba(102,126,234,0.08);
+      overflow: hidden; margin-bottom: 24px; border: 1px solid #e8eaf6;
+    }
+    .table-header {
+      padding: 18px 24px; border-bottom: 1px solid #e8eaf6;
+      display: flex; justify-content: space-between; align-items: center; background: white;
+    }
+    .table-header h3 { font-size: 15px; font-weight: 700; color: #1a1a2e; }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      background: #f7f8ff; padding: 12px 16px; text-align: left;
+      font-size: 11px; font-weight: 700; color: #8888aa;
+      text-transform: uppercase; letter-spacing: 0.6px;
+    }
+    td { padding: 14px 16px; font-size: 14px; color: #4a4a6a; border-top: 1px solid #f0f0f8; }
+    tr:hover td { background: #f7f8ff; }
+
+    /* ── Clickable student name ── */
+    .student-name-btn {
+      background: none; border: none; padding: 0;
+      font-size: 14px; font-weight: 700; color: #1a1a2e;
+      cursor: pointer; font-family: inherit; text-align: left;
+      text-decoration: underline;
+      text-decoration-color: #c7d0ff;
+      text-underline-offset: 3px;
+      transition: color 0.15s;
+    }
+    .student-name-btn:hover { color: #667eea; text-decoration-color: #667eea; }
+
+    /* ── Badges ── */
+    .badge {
+      display: inline-block; padding: 4px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;
+    }
+    .badge-stem       { background: #eef0fd; color: #4c63d2; }
+    .badge-abm        { background: #e6f7ee; color: #276749; }
+    .badge-humss      { background: #fce8f3; color: #97266d; }
+    .badge-superadmin { background: #fff3e0; color: #c05621; }
+    .badge-moderator  { background: #e6f7ee; color: #276749; }
+    .badge-viewer     { background: #eef0fd; color: #4c63d2; }
+
+    /* ── RIASEC trait badges ── */
+    .trait-R { background: #fef3c7; color: #92400e; }
+    .trait-I { background: #ede9fe; color: #5b21b6; }
+    .trait-A { background: #fce7f3; color: #9d174d; }
+    .trait-S { background: #d1fae5; color: #065f46; }
+    .trait-E { background: #fee2e2; color: #991b1b; }
+    .trait-C { background: #dbeafe; color: #1e40af; }
+
+    /* ── Buttons ── */
+    .btn {
+      padding: 8px 18px; border-radius: 8px; border: none;
+      font-size: 13px; font-weight: 600; font-family: inherit;
+      cursor: pointer; transition: all 0.2s; width: auto;
+    }
+    .btn-danger { background: #fff0f0; color: #c53030; border: 1px solid #fed7d7; }
+    .btn-danger:hover { background: #fc8181; color: white; border-color: transparent; transform: none; box-shadow: none; }
+    .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(102,126,234,0.4); }
+    .btn-cancel { background: #f7f8ff; color: #4a4a6a; border: 1px solid #e8eaf6; }
+    .btn-cancel:hover { background: #e8eaf6; transform: none; box-shadow: none; }
+
+    .search-input {
+      padding: 8px 14px; border: 1.5px solid #e8eaf6; border-radius: 8px;
+      font-size: 13px; font-family: inherit; outline: none;
+      width: 200px; transition: border-color 0.2s;
+    }
+    .search-input:focus { border-color: #667eea; }
+
+    /* ── Add Admin Modal ── */
+    .modal-backdrop {
+      display: none; position: fixed; inset: 0;
+      background: rgba(26,20,60,0.5); z-index: 100;
+      justify-content: center; align-items: center;
+      backdrop-filter: blur(4px);
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: white; border-radius: 20px; padding: 36px;
+      width: 100%; max-width: 420px;
+      box-shadow: 0 20px 60px rgba(102,126,234,0.25); border: 1px solid #e8eaf6;
+    }
+    .modal h3 { margin-bottom: 22px; font-size: 18px; font-weight: 700; color: #1a1a2e; }
+    .modal input, .modal select {
+      width: 100%; padding: 11px 14px; border: 1.5px solid #e8eaf6;
+      border-radius: 8px; font-size: 14px; font-family: inherit;
+      margin-bottom: 14px; outline: none; color: #1a1a2e; transition: border-color 0.2s;
+    }
+    .modal input:focus, .modal select:focus {
+      border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+    }
+    .modal-actions { display: flex; gap: 10px; margin-top: 6px; }
+
+    /* ── Student Results Modal ── */
+    .results-backdrop {
+      display: none; position: fixed; inset: 0;
+      background: rgba(26,20,60,0.55); z-index: 150;
+      justify-content: center; align-items: center;
+      backdrop-filter: blur(5px);
+    }
+    .results-backdrop.open { display: flex; }
+
+    .results-modal {
+      background: white; border-radius: 24px;
+      width: 100%; max-width: 620px;
+      max-height: 88vh; overflow-y: auto;
+      box-shadow: 0 24px 72px rgba(102,126,234,0.28);
+      border: 1px solid #e8eaf6;
+      animation: slideUp 0.25s ease;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .results-modal-header {
+      padding: 28px 28px 20px;
+      display: flex; justify-content: space-between; align-items: flex-start;
+      border-bottom: 1px solid #e8eaf6;
+      position: sticky; top: 0; background: white; z-index: 10;
+      border-radius: 24px 24px 0 0;
+    }
+
+    .results-modal-header .student-info h2 {
+      font-size: 20px; font-weight: 700; color: #1a1a2e; margin-bottom: 4px;
+    }
+    .results-modal-header .student-info p {
+      font-size: 13px; color: #8888aa; margin: 0;
+    }
+
+    .modal-close-btn {
+      background: #f7f8ff; border: 1.5px solid #e8eaf6;
+      border-radius: 8px; width: 34px; height: 34px;
+      font-size: 16px; cursor: pointer; color: #8888aa;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: all 0.2s;
+    }
+    .modal-close-btn:hover { background: #fee2e2; border-color: #fca5a5; color: #c53030; }
+
+    .results-modal-body { padding: 24px 28px 28px; }
+
+    /* ── Attempt cards inside modal ── */
+    .attempt-card {
+      border: 1.5px solid #e8eaf6; border-radius: 14px;
+      padding: 18px 20px; margin-bottom: 14px;
+      background: #fafbff; position: relative; overflow: hidden;
+      transition: box-shadow 0.2s;
+    }
+    .attempt-card:last-child { margin-bottom: 0; }
+    .attempt-card:hover { box-shadow: 0 4px 16px rgba(102,126,234,0.1); }
+
+    .attempt-card.latest {
+      border-color: #c7d0ff;
+      background: linear-gradient(135deg, #fafbff, #f3f0ff);
+    }
+    .attempt-card.latest::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0;
+      height: 3px; background: linear-gradient(90deg, #667eea, #764ba2);
+    }
+
+    .attempt-card-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 14px;
+    }
+    .attempt-card-header .attempt-label {
+      font-size: 13px; font-weight: 700; color: #1a1a2e;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .latest-pill {
+      font-size: 10px; background: linear-gradient(135deg,#667eea,#764ba2);
+      color: white; border-radius: 20px; padding: 2px 10px; font-weight: 700;
+    }
+    .attempt-card-header .attempt-date { font-size: 12px; color: #aaaacc; }
+
+    .attempt-top-trait {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 14px;
+    }
+    .attempt-top-trait .label-txt { font-size: 12px; color: #8888aa; font-weight: 600; }
+
+    /* ── RIASEC score bars ── */
+    .riasec-bars { display: flex; flex-direction: column; gap: 8px; }
+    .riasec-bar-row { display: flex; align-items: center; gap: 10px; }
+    .riasec-bar-row .bar-key {
+      width: 20px; font-size: 11px; font-weight: 800;
+      color: #555; text-align: center; flex-shrink: 0;
+    }
+    .riasec-bar-row .bar-name {
+      width: 110px; font-size: 11px; color: #8888aa; flex-shrink: 0;
+    }
+    .riasec-bar-row .bar-track {
+      flex: 1; height: 8px; background: #eef0fd; border-radius: 20px; overflow: hidden;
+    }
+    .riasec-bar-row .bar-fill {
+      height: 100%; border-radius: 20px;
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      transition: width 0.5s ease;
+    }
+    .riasec-bar-row .bar-score {
+      font-size: 12px; font-weight: 700; color: #667eea;
+      width: 24px; text-align: right; flex-shrink: 0;
+    }
+
+    .no-results-state {
+      text-align: center; padding: 44px 20px;
+    }
+    .no-results-state .icon { font-size: 48px; margin-bottom: 14px; }
+    .no-results-state h3 { font-size: 16px; font-weight: 700; color: #1a1a2e; margin-bottom: 6px; }
+    .no-results-state p  { font-size: 13px; color: #8888aa; }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed; bottom: 28px; right: 28px;
+      background: #1a1a2e; color: white;
+      padding: 12px 22px; border-radius: 10px;
+      font-size: 14px; font-weight: 500;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      opacity: 0; transform: translateY(10px);
+      transition: all 0.3s; pointer-events: none; z-index: 300;
+      border-left: 3px solid #667eea;
+    }
+    #toast.show { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+<div class="app">
+
+<!-- ── Sidebar ── -->
+<div class="sidebar">
+  <div class="sidebar-logo">🎓 CourseMatch</div>
+  <div class="sidebar-role" id="roleBadge">Loading...</div>
+  <nav>
+    <a href="#" class="active" onclick="showPanel('dashboard', this)">📊 Dashboard</a>
+    <a href="#" onclick="showPanel('students', this)">👥 Students</a>
+    <a href="#" id="nav-admins" class="hidden" onclick="showPanel('admins', this)">🔐 Manage Admins</a>
+  </nav>
+  <div class="sidebar-logout">
+    <a href="#" onclick="logout()">🚪 Logout</a>
+  </div>
+</div>
+
+<!-- ── Main ── -->
+<div class="main">
+
+  <!-- Dashboard Panel -->
+  <div class="panel active" id="panel-dashboard">
+    <div class="page-title">System Analytics</div>
+    <div class="page-sub">Overview of all student activity.</div>
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="label">Total Students</div>
+        <div class="value" id="stat-total">—</div>
+        <div class="sub">Registered accounts</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">STEM</div>
+        <div class="value" id="stat-stem">—</div>
+        <div class="sub">students enrolled</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">ABM</div>
+        <div class="value" id="stat-abm">—</div>
+        <div class="sub">students enrolled</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">HUMSS</div>
+        <div class="value" id="stat-humss">—</div>
+        <div class="sub">students enrolled</div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <div class="table-header"><h3>Recent Registrations</h3></div>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th><th>Email</th><th>Strand</th><th>Registered</th>
+          </tr>
+        </thead>
+        <tbody id="recent-tbody">
+          <tr><td colspan="4" style="text-align:center;color:#aaaacc;padding:32px">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Students Panel -->
+  <div class="panel" id="panel-students">
+    <div class="page-title">All Students</div>
+    <div class="page-sub">Click a student's name to view their full assessment history.</div>
+    <div class="table-wrap">
+      <div class="table-header">
+        <h3>Student List</h3>
+        <input type="text" class="search-input" id="student-search"
+          placeholder="🔍 Search students..."
+          oninput="filterStudents(this.value)">
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Strand</th>
+            <th>Latest Result</th>
+            <th>Attempts</th>
+            <th>Registered</th>
+            <th id="th-actions"></th>
+          </tr>
+        </thead>
+        <tbody id="students-tbody">
+          <tr><td colspan="8" style="text-align:center;color:#aaaacc;padding:32px">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Admins Panel -->
+  <div class="panel" id="panel-admins">
+    <div class="page-title">Manage Admins</div>
+    <div class="page-sub">Add or remove admin accounts. <strong>Super Admin only.</strong></div>
+    <div class="table-wrap">
+      <div class="table-header">
+        <h3>Admin Accounts</h3>
+        <button class="btn btn-primary" onclick="openAddAdmin()">+ Add Admin</button>
+      </div>
+      <table>
+        <thead>
+          <tr><th>Username</th><th>Role</th><th>Created</th><th></th></tr>
+        </thead>
+        <tbody id="admins-tbody">
+          <tr><td colspan="4" style="text-align:center;color:#aaaacc;padding:32px">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ── Add Admin Modal ── -->
+<div class="modal-backdrop" id="modal">
+  <div class="modal">
+    <h3>➕ Add New Admin</h3>
+    <input id="new-username" placeholder="Username">
+    <input id="new-password" type="password" placeholder="Password (min 8 chars)">
+    <select id="new-role">
+      <option value="">Select Role</option>
+      <option value="superadmin">Super Admin</option>
+      <option value="moderator">Moderator</option>
+      <option value="viewer">Viewer</option>
+    </select>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="addAdmin()">Add Admin</button>
+      <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Student Results Modal ── -->
+<div class="results-backdrop" id="resultsModal" onclick="closeResultsModal(event)">
+  <div class="results-modal" id="resultsModalInner">
+
+    <div class="results-modal-header">
+      <div class="student-info">
+        <h2 id="modal-student-name">—</h2>
+        <p id="modal-student-meta">—</p>
+      </div>
+      <button class="modal-close-btn" onclick="closeResultsModalDirect()">✕</button>
+    </div>
+
+    <div class="results-modal-body" id="modal-results-body">
+      <!-- Injected by JS -->
+    </div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="script.js"></script>
+<script>
+
+let currentRole = '';
+let allStudents = [];
+
+const MAX_ATTEMPTS = 3;
+
+const traitLabels = {
+  R: "🔧 Realistic",
+  I: "🔬 Investigative",
+  A: "🎨 Artistic",
+  S: "🤝 Social",
+  E: "💼 Enterprising",
+  C: "📋 Conventional"
+};
+
+const traitFullNames = {
+  R: "Realistic",
+  I: "Investigative",
+  A: "Artistic",
+  S: "Social",
+  E: "Enterprising",
+  C: "Conventional"
+};
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+async function init() {
+  const res  = await fetch(BASE + 'admin_api.php?action=get_role');
+  const data = await res.json();
+
+  if (!data.success) {
+    window.location = BASE + 'admin-login.html';
+    return;
+  }
+
+  currentRole = data.role;
+
+  const badge = document.getElementById('roleBadge');
+  badge.textContent = data.role.charAt(0).toUpperCase() + data.role.slice(1);
+  badge.className   = 'sidebar-role role-' + data.role;
+
+  if (currentRole === 'superadmin') {
+    document.getElementById('nav-admins').classList.remove('hidden');
+  }
+
+  loadDashboard();
+  loadStudents();
+  if (currentRole === 'superadmin') loadAdmins();
+}
+
+function showPanel(name, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sidebar nav a').forEach(a => a.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  el.classList.add('active');
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+async function loadDashboard() {
+  const res  = await fetch(BASE + 'admin_api.php?action=stats');
+  const data = await res.json();
+  if (!data.success) return;
+
+  document.getElementById('stat-total').textContent = data.total;
+
+  const strandMap = { STEM: 'stat-stem', ABM: 'stat-abm', HUMSS: 'stat-humss' };
+  Object.keys(strandMap).forEach(s => document.getElementById(strandMap[s]).textContent = 0);
+  data.strands.forEach(s => {
+    const el = document.getElementById(strandMap[s.strand]);
+    if (el) el.textContent = s.c;
+  });
+
+  const tbody = document.getElementById('recent-tbody');
+  tbody.innerHTML = data.recent.length === 0
+    ? '<tr><td colspan="4" style="text-align:center;color:#aaaacc;padding:32px">No students yet.</td></tr>'
+    : data.recent.map(s => `
+        <tr>
+          <td><strong>${s.name}</strong></td>
+          <td style="color:#8888aa">${s.email}</td>
+          <td><span class="badge badge-${s.strand.toLowerCase()}">${s.strand}</span></td>
+          <td style="color:#8888aa">${new Date(s.created_at).toLocaleDateString()}</td>
+        </tr>`).join('');
+}
+
+// ── Students ──────────────────────────────────────────────────────────────────
+async function loadStudents() {
+  const res  = await fetch(BASE + 'admin_api.php?action=get_students');
+  const data = await res.json();
+  if (!data.success) return;
+
+  allStudents = data.students;
+
+  if (currentRole === 'superadmin') {
+    document.getElementById('th-actions').textContent = 'Action';
+  }
+
+  renderStudents(allStudents);
+}
+
+function getTopTrait(riasec) {
+  if (!riasec) return null;
+  return Object.entries(riasec).sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function renderStudents(list) {
+  const tbody = document.getElementById('students-tbody');
+
+  if (list.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#aaaacc;padding:32px">No students found.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = list.map(s => {
+    const attempts     = s.attempts || [];
+    const latest       = attempts[attempts.length - 1] || null;
+    const latestTop    = latest ? computeRecommendations(latest.riasec)[0]?.name : null;
+    const attemptCount = attempts.length;
+
+    return `
+      <tr>
+        <td>
+         <button class="student-name-btn" data-id="${s.id}" onclick="openResultsModal(this.dataset.id)">
+            ${s.name}
+          </button>
+        </td>
+        <td style="color:#8888aa">${s.email}</td>
+        <td style="color:#8888aa">${s.phone || '—'}</td>
+        <td><span class="badge badge-${s.strand.toLowerCase()}">${s.strand}</span></td>
+        <td>
+       ${latestTop
+  ? `<span style="font-size:12px;font-weight:600;color:#667eea">${latestTop}</span>`
+  : '<span style="color:#ccc;font-size:12px">Not taken</span>'}
+        </td>
+        <td style="text-align:center;">
+          <span style="font-size:13px; font-weight:700;
+            color:${attemptCount >= MAX_ATTEMPTS ? '#764ba2' : '#667eea'}">
+            ${attemptCount} / ${MAX_ATTEMPTS}
+          </span>
+        </td>
+        <td style="color:#8888aa">${new Date(s.created_at).toLocaleDateString()}</td>
+        <td>
+          ${currentRole === 'superadmin'
+            ? `<button class="btn btn-danger" onclick="deleteStudent(${s.id})">Delete</button>`
+            : ''}
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+function filterStudents(q) {
+  const filtered = allStudents.filter(s =>
+    s.name.toLowerCase().includes(q.toLowerCase()) ||
+    s.email.toLowerCase().includes(q.toLowerCase()) ||
+    s.strand.toLowerCase().includes(q.toLowerCase())
+  );
+  renderStudents(filtered);
+}
+
+// ── Student Results Modal ─────────────────────────────────────────────────────
+function openResultsModal(studentId) {
+  const s = allStudents.find(x => String(x.id) === String(studentId));
+  if (!s) return;
+
+  document.getElementById('modal-student-name').textContent = s.name;
+  document.getElementById('modal-student-meta').textContent =
+    `${s.email}  ·  ${s.strand}  ·  Registered ${new Date(s.created_at).toLocaleDateString()}`;
+
+  const body     = document.getElementById('modal-results-body');
+  const attempts = s.attempts || [];
+  console.log('attempts:', attempts, 'computeRecommendations:', typeof computeRecommendations);
+
+  if (attempts.length === 0) {
+    body.innerHTML = `
+      <div class="no-results-state">
+        <div class="icon">📋</div>
+        <h3>No Assessments Yet</h3>
+        <p>${s.name} has not completed the career assessment.</p>
+      </div>`;
+  } else {
+    const sorted = [...attempts].reverse(); // newest first
+    const latest = sorted[0]; // most recent attempt
+
+    // Compute recommendations from latest attempt
+    const recs = computeRecommendations(latest.riasec);
+    const topTrait = getTopTrait(latest.riasec);
+
+    const recCardsHTML = recs.map((c, i) => {
+      const pct = Math.round(c.matchScore * 100);
+      return `
+        <div class="course-rec-card">
+          ${i === 0 ? '<div class="best-match-pill">🏆 Best Match</div>' : ''}
+          <div class="course-rec-top">
+            <div>
+              <div class="course-rec-name">${c.name}</div>
+              <div class="course-rec-college">${collegeLabels[c.college] || c.college}</div>
+            </div>
+            <div class="course-rec-pct">${pct}%</div>
+          </div>
+          <div class="course-rec-bar-track">
+            <div class="course-rec-bar-fill" style="width:${pct}%"></div>
+          </div>
+        </div>`;
+    }).join('');
+
+    const attemptsHTML = sorted.map((a, i) => {
+      const isLatest     = (i === 0);
+      const attemptNumber = attempts.length - i;
+      const top           = getTopTrait(a.riasec);
+      const date          = a.taken_at ? new Date(a.taken_at).toLocaleString() : '—';
+
+      const riasecEntries = a.riasec
+        ? Object.entries(a.riasec).sort((x, y) => y[1] - x[1])
+        : [];
+
+      const bars = riasecEntries.map(([t, v]) => `
+        <div class="riasec-bar-row">
+          <div class="bar-key">${t}</div>
+          <div class="bar-name">${traitFullNames[t]}</div>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:${Math.round((v/25)*100)}%"></div>
+          </div>
+          <div class="bar-score">${v}</div>
+        </div>`).join('');
+
+  return `
+  <div class="attempt-card ${isLatest ? 'latest' : ''}">
+    <div class="attempt-card-header">
+      <div class="attempt-label">
+        Attempt #${attemptNumber}
+        ${isLatest ? '<span class="latest-pill">Latest</span>' : ''}
+      </div>
+      <div class="attempt-date">${date}</div>
+    </div>
+    <div class="attempt-top-trait">
+      <span class="label-txt">Top Course:</span>
+      ${a.riasec
+        ? `<span style="font-size:12px;font-weight:600;color:#667eea">${computeRecommendations(a.riasec)[0]?.name || '—'}</span>`
+        : '<span style="color:#ccc">—</span>'}
+    </div>
+    <div class="riasec-bars">${bars}</div>
+  </div>`;
+    }).join('');
+
+    body.innerHTML = `
+      <!-- Personality Insight -->
+      <div class="modal-section-title">Personality Insight</div>
+      <div class="modal-insight">
+        ${topTrait ? `<strong>${traitLabels[topTrait]}</strong> — ` : ''}
+        ${topTrait ? insightText[topTrait] : 'No insight available.'}
+      </div>
+
+      <!-- Course Recommendations -->
+      <div class="modal-section-title" style="margin-top:20px">
+        Top Course Recommendations — based on latest attempt
+      </div>
+      ${recCardsHTML}
+
+      <!-- All Attempts -->
+      <div class="modal-section-title" style="margin-top:20px">
+        ${attempts.length} of ${MAX_ATTEMPTS} attempts stored
+      </div>
+      ${attemptsHTML}
+    `;
+  }
+
+  document.getElementById('resultsModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeResultsModal(event) {
+  if (event.target === document.getElementById('resultsModal')) {
+    closeResultsModalDirect();
+  }
+}
+
+function closeResultsModalDirect() {
+  document.getElementById('resultsModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ── Delete Student ────────────────────────────────────────────────────────────
+async function deleteStudent(id) {
+  if (!confirm('Delete this student? This cannot be undone.')) return;
+  const fd = new FormData();
+  fd.append('action', 'delete_student');
+  fd.append('id', id);
+  const res  = await fetch(BASE + 'admin_api.php', { method: 'POST', body: fd });
+  const data = await res.json();
+  toast(data.message);
+  if (data.success) { loadStudents(); loadDashboard(); }
+}
+
+// ── Admins ────────────────────────────────────────────────────────────────────
+async function loadAdmins() {
+  const res  = await fetch(BASE + 'admin_api.php?action=get_admins');
+  const data = await res.json();
+  if (!data.success) return;
+
+  const tbody = document.getElementById('admins-tbody');
+  tbody.innerHTML = data.admins.map(a => `
+    <tr>
+      <td><strong>${a.username}</strong></td>
+      <td><span class="badge badge-${a.role}">${a.role}</span></td>
+      <td style="color:#8888aa">${new Date(a.created_at).toLocaleDateString()}</td>
+      <td><button class="btn btn-danger" onclick="deleteAdmin(${a.id})">Delete</button></td>
+    </tr>`).join('');
+}
+
+function openAddAdmin() { document.getElementById('modal').classList.add('open'); }
+function closeModal()   { document.getElementById('modal').classList.remove('open'); }
+
+async function addAdmin() {
+  const fd = new FormData();
+  fd.append('action',   'add_admin');
+  fd.append('username', document.getElementById('new-username').value.trim());
+  fd.append('password', document.getElementById('new-password').value);
+  fd.append('role',     document.getElementById('new-role').value);
+
+  const res  = await fetch(BASE + 'admin_api.php', { method: 'POST', body: fd });
+  const data = await res.json();
+  toast(data.message);
+  if (data.success) { closeModal(); loadAdmins(); }
+}
+
+async function deleteAdmin(id) {
+  if (!confirm('Delete this admin account?')) return;
+  const fd = new FormData();
+  fd.append('action', 'delete_admin');
+  fd.append('id', id);
+  const res  = await fetch(BASE + 'admin_api.php', { method: 'POST', body: fd });
+  const data = await res.json();
+  toast(data.message);
+  if (data.success) loadAdmins();
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+const insightText = {
+  R: "Hands-on and technically inclined — enjoys building, repairing, and working with real systems.",
+  I: "Analytical and driven by curiosity — enjoys researching, problem-solving, and deep thinking.",
+  A: "Imaginative and expressive — communicates ideas with clarity and creativity.",
+  S: "Compassionate and people-focused — finds meaning in helping, teaching, and supporting others.",
+  E: "Confident, driven, and persuasive — enjoys leading teams and turning ideas into action.",
+  C: "Precise, organized, and detail-oriented — prefers structured environments where accuracy matters."
+};
+
+const collegeLabels = {
+  CEAC: "College of Engineering, Architecture & Computing",
+  CAS:  "College of Arts and Sciences",
+  CBA:  "College of Business Administration",
+  CED:  "College of Education",
+  Law:  "College of Law"
+};
+
+const courses = [
+  { name: "BS Computer Science",                college: "CEAC", primary: "I", traits: { I:0.6, C:0.4 } },
+  { name: "BS Information Technology",          college: "CEAC", primary: "I", traits: { I:0.4, C:0.4, R:0.2 } },
+  { name: "BS Computer Engineering",            college: "CEAC", primary: "I", traits: { I:0.5, R:0.3, C:0.2 } },
+  { name: "BS Civil Engineering",               college: "CEAC", primary: "R", traits: { R:0.5, I:0.3, C:0.2 } },
+  { name: "BS Electrical Engineering",          college: "CEAC", primary: "R", traits: { R:0.4, I:0.4, C:0.2 } },
+  { name: "BS Electronics Engineering",         college: "CEAC", primary: "I", traits: { I:0.5, R:0.3, C:0.2 } },
+  { name: "BS Architecture",                    college: "CEAC", primary: "A", traits: { A:0.5, R:0.3, I:0.2 } },
+  { name: "BS Library and Information Science", college: "CEAC", primary: "C", traits: { C:0.5, I:0.3, S:0.2 } },
+  { name: "BA Philosophy",                      college: "CAS",  primary: "I", traits: { I:0.5, A:0.3, S:0.2 } },
+  { name: "BA Psychology",                      college: "CAS",  primary: "S", traits: { S:0.5, I:0.3, A:0.2 } },
+  { name: "BA Political Science",               college: "CAS",  primary: "E", traits: { E:0.4, S:0.3, I:0.3 } },
+  { name: "BA Communication",                   college: "CAS",  primary: "A", traits: { A:0.5, E:0.3, S:0.2 } },
+  { name: "BS Biology",                         college: "CAS",  primary: "I", traits: { I:0.6, R:0.2, S:0.2 } },
+  { name: "BS Chemistry",                       college: "CAS",  primary: "I", traits: { I:0.6, R:0.2, C:0.2 } },
+  { name: "BS Environmental Science",           college: "CAS",  primary: "I", traits: { I:0.4, R:0.3, S:0.3 } },
+  { name: "BS Criminology",                     college: "CAS",  primary: "S", traits: { S:0.3, R:0.3, I:0.2, E:0.2 } },
+  { name: "BS Medical Technology",              college: "CAS",  primary: "I", traits: { I:0.5, C:0.3, S:0.2 } },
+  { name: "BS Nursing",                         college: "CAS",  primary: "S", traits: { S:0.6, I:0.2, R:0.2 } },
+  { name: "BS Social Work",                     college: "CAS",  primary: "S", traits: { S:0.6, E:0.2, A:0.2 } },
+  { name: "BS Accountancy",                     college: "CBA",  primary: "C", traits: { C:0.6, I:0.2, E:0.2 } },
+  { name: "BS Management Accounting",           college: "CBA",  primary: "C", traits: { C:0.5, E:0.3, I:0.2 } },
+  { name: "BSBA – Human Resource Management",   college: "CBA",  primary: "E", traits: { E:0.4, S:0.4, C:0.2 } },
+  { name: "BSBA – Financial Management",        college: "CBA",  primary: "C", traits: { C:0.4, E:0.3, I:0.3 } },
+  { name: "BSBA – Marketing Management",        college: "CBA",  primary: "E", traits: { E:0.5, A:0.3, S:0.2 } },
+  { name: "BS Hospitality Management",          college: "CBA",  primary: "E", traits: { E:0.4, S:0.4, A:0.2 } },
+  { name: "Bachelor of Elementary Education",   college: "CED",  primary: "S", traits: { S:0.6, A:0.2, C:0.2 } },
+  { name: "BSEd – Major in English",            college: "CED",  primary: "A", traits: { A:0.4, S:0.4, I:0.2 } },
+  { name: "BSEd – Major in Filipino",           college: "CED",  primary: "A", traits: { A:0.4, S:0.4, I:0.2 } },
+  { name: "BSEd – Major in Mathematics",        college: "CED",  primary: "I", traits: { I:0.4, C:0.4, S:0.2 } },
+  { name: "BSEd – Major in Religious Education",college: "CED",  primary: "S", traits: { S:0.5, A:0.3, I:0.2 } },
+  { name: "BSEd – Major in Science",            college: "CED",  primary: "I", traits: { I:0.5, S:0.3, R:0.2 } },
+  { name: "BSEd – Major in Social Studies",     college: "CED",  primary: "S", traits: { S:0.4, E:0.3, I:0.3 } },
+  { name: "Bachelor of Physical Education",     college: "CED",  primary: "R", traits: { R:0.5, S:0.3, E:0.2 } },
+  { name: "Bachelor of Laws (LLB)",             college: "Law",  primary: "E", traits: { E:0.5, I:0.3, S:0.2 } },
+];
+
+function computeRecommendations(riasec) {
+  const TRAIT_MIN = 5, TRAIT_MAX = 25, TRAIT_RANGE = TRAIT_MAX - TRAIT_MIN;
+  const traitKeys = ["R","I","A","S","E","C"];
+  const norm = {};
+  for (let t of traitKeys) norm[t] = Math.max(0, Math.min(1, (riasec[t] - TRAIT_MIN) / TRAIT_RANGE));
+  const avgNorm = traitKeys.reduce((sum, t) => sum + norm[t], 0) / traitKeys.length;
+  const rel = {};
+  for (let t of traitKeys) rel[t] = norm[t] - avgNorm;
+
+  function cosineSim(u, c) {
+    let dot=0, magU=0, magC=0;
+    for (let i=0; i<traitKeys.length; i++) { dot+=u[i]*c[i]; magU+=u[i]**2; magC+=c[i]**2; }
+    return (magU===0||magC===0) ? 0 : dot/(Math.sqrt(magU)*Math.sqrt(magC));
+  }
+  function rankVec(obj) {
+    const sorted = traitKeys.slice().sort((a,b)=>(obj[b]||0)-(obj[a]||0));
+    const v={}; sorted.forEach((t,i)=>{ v[t]=1/(i+1); }); return v;
+  }
+  function matchScore(course) {
+    const userRelVec    = traitKeys.map(t => Math.max(0, rel[t]));
+    const courseWeights = traitKeys.map(t => course.traits[t]||0);
+    const cosine  = cosineSim(userRelVec, courseWeights);
+    const uRank   = rankVec(rel), cRank = rankVec(course.traits);
+    const rankSim = cosineSim(traitKeys.map(t=>uRank[t]||0), traitKeys.map(t=>cRank[t]||0));
+    let absFit = 0;
+    for (let t in course.traits) absFit += course.traits[t] * norm[t];
+    let blended = (cosine*0.45) + (rankSim*0.35) + (absFit*0.20);
+    if (norm[course.primary] < 0.33) blended *= 0.45;
+    else if (rel[course.primary] < 0) blended *= (0.75 + 0.25*(norm[course.primary]/0.33));
+    return Math.max(0, Math.min(1, blended));
+  }
+
+  return courses
+    .map(c => ({ ...c, matchScore: matchScore(c) }))
+    .sort((a,b) => b.matchScore - a.matchScore)
+    .slice(0, 5);
+}
+init();
+</script>
+</body>
+</html>
