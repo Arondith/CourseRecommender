@@ -1,6 +1,8 @@
 # CourseRecommender
 
-CourseRecommender is a web-based course recommendation and administration project built with HTML, PHP, JavaScript, and a database-backed authentication flow.
+## About
+
+A web-based academic course recommendation and administration system built with HTML, PHP, JavaScript, and database-backed authentication. The project combines user-facing recommendation workflows with administrative tools and reporting features.
 
 ## Features
 
