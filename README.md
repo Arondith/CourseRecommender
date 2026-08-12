@@ -2,17 +2,24 @@
 
 ## About
 
-A web-based academic course recommendation and administration system built with HTML, PHP, JavaScript, and database-backed authentication. The project combines user-facing recommendation workflows with administrative tools and reporting features.
+A **web-based academic course recommendation and administration system** built with HTML, PHP, JavaScript, and a database-backed authentication flow. The project combines a student-facing recommendation experience with administrative controls for managing access, viewing information, and supporting reporting.
 
-## Features
+Users can register, log in, recover account access, open a dashboard, and move through the course-recommendation workflow. The system also includes a separate **administrator login and dashboard**, authentication checks, session handling, database connectivity, API-style backend logic, and chart/reporting components. The project demonstrates how a front-end interface connects to PHP application logic and persistent database data in a multi-role web system.
+
+## Core features
 
 - User registration and login
 - Password recovery interface
 - User dashboard
 - Course recommendation workflow
-- Administrative login and dashboard
-- Authentication checks and session handling
+- Separate administrator login
+- Administrative dashboard
+- Authentication checks and protected access
+- Session handling
+- PHP backend/API logic
+- Database connection and persistent data
 - Charts and reporting support
+- Responsive web interface
 
 ## Project structure
 
@@ -28,6 +35,16 @@ Key files include:
 - `db_connect.php` — database connection setup
 - `chart.js` — charting library used by the project
 - `images/` — image assets
+
+## Technology
+
+- HTML
+- CSS
+- JavaScript
+- PHP
+- Database-backed authentication
+- Sessions and access control
+- Chart/reporting components
 
 ## Running locally
 
