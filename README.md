@@ -18,9 +18,14 @@ CourseMatch is a PHP/MySQL web application that helps students explore college p
 
 ## Project preview
 
-| Assessment | Career report |
-| --- | --- |
-| ![CourseMatch assessment screen](images/project-preview-assessment.jpg) | ![CourseMatch recommendations and career report](images/project-preview-results.jpg) |
+### Login
+![CourseMatch Login](images/loginCoursematch.png)
+
+### Assessment
+![CourseMatch Assessment](images/project-preview-assessment.jpg)
+
+### Career Report
+![CourseMatch Career Report](images/project-preview-results.jpg)
 
 ## Technology
 
