@@ -13,7 +13,7 @@ require_once __DIR__ . '/src/Exception.php';
 require_once __DIR__ . '/src/PHPMailer.php';
 require_once __DIR__ . '/src/SMTP.php';
 
-function resetResponse(bool $success, string $message = ''): never
+function resetResponse(bool $success, string $message = ''): void
 {
     echo json_encode([
         'success' => $success,
