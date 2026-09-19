@@ -1,19 +1,19 @@
 # CourseMatch
 
-CourseMatch is a PHP/MySQL web application that helps students explore college programs through a **30-question RIASEC interest assessment**. It combines student authentication, assessment history, program-fit scoring, password recovery, and an administrative dashboard in one multi-role system.
+CourseMatch is a PHP/MySQL web application designed to help students explore **NDMU-Marbel college programs through a 42-question college-affinity assessment**. The system combines student authentication, an interactive assessment, college-affinity scoring, program recommendations, password recovery, assessment history, and an administrative dashboard in one multi-role web application.
 
 ## Highlights
 
-- 30-question RIASEC assessment covering Realistic, Investigative, Artistic, Social, Enterprising, and Conventional interests
-- Draft assessment progress survives page refreshes during the current browser session
-- Server-backed student sessions and assessment history
-- Ranked program recommendations with a radar profile, trait breakdown, and explainable fit scores
+- **42-question college-affinity assessment** using a 1–5 agreement scale
+- Questions are presented around NDMU-Marbel academic and career areas such as health sciences, business, education, arts and sciences, and engineering-related programs
+- Visual question progress tracker with current-question and completion indicators
+- Personalized **College Affinity** report after assessment completion
+- Radar-chart visualization of the student's strongest college areas
+- Ranked NDMU-Marbel program recommendations with compatibility scores and match labels
 - Student registration, login, logout, password reset, and account recovery
-- Role-based administrator dashboard
-- Up to three stored assessment attempts per student
-- Responsive student UI with desktop sidebar and mobile bottom navigation
-- Environment-based configuration so database and mail credentials are not stored in source files
-- Reproducible SQL schema included in the repository
+- Assessment history and student records stored through the PHP/MySQL backend
+- Separate administrator authentication and role-based administration tools
+- Responsive student interface for assessment and recommendation viewing
 
 
 ## Project preview
@@ -28,13 +28,13 @@ The student login connects to the PHP authentication flow, verifies the user's e
 
 ![CourseMatch Assessment](images/project-preview-assessment.jpg)
 
-The assessment contains **30 RIASEC questions** — five each for Realistic, Investigative, Artistic, Social, Enterprising, and Conventional interests. Students answer using a **1–5 Likert scale**. Question order is randomized, unfinished progress is preserved in the browser session, and the completed six-trait score is validated and stored through the authenticated student API.
+The assessment contains **42 questions** answered through a **1–5 Likert scale**, from *Strongly Disagree* to *Strongly Agree*. Each question is associated with an NDMU-Marbel academic or career area—for example **Health Sciences** for Nursing, Medical Technology, and Criminology, or **Engineering, Architecture & Computing** for related technical programs. The interface shows the current question, completion count, progress bar, and a dot-by-dot progress tracker while the student works through the assessment.
 
 ### Career Report
 
 ![CourseMatch Career Report](images/project-preview-results.jpg)
 
-The report turns the six RIASEC scores into a **top-three interest profile**, trait breakdown, and radar chart. CourseMatch compares that profile with **33 coded degree programs across four colleges** and displays the **top six program matches**. The recommendation score combines profile-shape similarity, ranked-trait similarity, and absolute trait fit; it is presented as a guidance score rather than an admission probability.
+After the assessment, CourseMatch generates a **College Affinity** report that summarizes the student's strongest academic areas. A radar chart visualizes affinity across college groupings such as **Arts & Sciences, Business, Education, Engineering / Architecture / Computing, and Health Sciences**. The system then presents recommended NDMU-Marbel degree programs with a **compatibility score**, progress bar, and match label such as *Best Match* or *Good Match*. These results are intended to support course exploration rather than guarantee admission or career outcomes.
 
 ## Technology
 
@@ -51,12 +51,12 @@ The report turns the six RIASEC scores into a **top-three interest profile**, tr
 CourseRecommender/
 ├── index.html              # Student sign in
 ├── register.html           # Student registration
-├── dashboard.html          # RIASEC assessment
-├── result.html             # Profile and recommendations
+├── dashboard.html          # 42-question college-affinity assessment
+├── result.html             # College-affinity report and recommendations
 ├── admin.html              # Administrator dashboard
 ├── script.js               # Shared auth/API helpers
 ├── assessment.js           # Assessment state and draft persistence
-├── recommender.js          # Program-fit scoring engine
+├── recommender.js          # Recommendation scoring logic
 ├── results.js              # Results rendering
 ├── modern.css              # Modern student UI layer
 ├── student_api.php         # Authenticated student session/attempt API
@@ -75,15 +75,11 @@ CourseRecommender/
 
 ## Recommendation model
 
-Each RIASEC trait contains five questions scored from **1 to 5**, producing a raw trait score from **5 to 25**.
+CourseMatch uses the student's responses to the **42-question assessment** to build a college-affinity profile. The assessment measures how strongly the student's interests align with different NDMU-Marbel academic areas and uses those accumulated affinity scores to produce the career report.
 
-The recommendation engine normalizes the six trait scores and compares the resulting student profile with a weighted trait profile for each program. The current fit score combines:
+The report visualizes the student's college-area profile and ranks individual degree programs using a **compatibility score**. Higher-scoring programs are surfaced first and may receive labels such as **Best Match** or **Good Match**.
 
-- 45% profile-shape similarity
-- 30% ranked-trait similarity
-- 25% absolute trait fit
-
-Programs whose primary trait is substantially below the student's profile receive a penalty. The result is a **CourseMatch profile-fit score**, not an admission probability, aptitude test result, or guarantee of career success.
+The compatibility percentage is a guidance metric produced by the application. It should be used together with program curricula, admission requirements, costs, career research, and guidance counseling rather than interpreted as an admission probability or guarantee of career success.
 
 ## Local setup
 
