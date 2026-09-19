@@ -1,15 +1,14 @@
 <?php
-session_start();
-header('Content-Type: application/json');
-require_once 'auth_check.php';
-require_once 'db_connect.php';
+header('Content-Type: application/json; charset=utf-8');
+require_once __DIR__ . '/session_bootstrap.php';
+require_once __DIR__ . '/auth_check.php';
+require_once __DIR__ . '/db_connect.php';
 
 
 
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
-if ($action !== 'save_attempt') {
-    requireAdmin();
-}
+requireAdmin();
+
 switch ($action) {
 
     // ── GET SESSION ROLE ───────────────────────────────────────────────────────
@@ -114,77 +113,6 @@ switch ($action) {
         echo json_encode(['success' => true, 'students' => $students]);
         break;
 
-    // ── SAVE ASSESSMENT ATTEMPT ────────────────────────────────────────────────
-    // Called from result.html / finishAssessment() after the student completes
-    // the quiz. Enforces the 3-attempt cap: if the student already has 3 stored
-    // attempts the oldest one is deleted first (rolling window).
-    case 'save_attempt':
-         error_log(print_r($_SESSION, true)); // logs session contents
-    $studentId = intval($_SESSION['student_id'] ?? 0);
-    if ($studentId === 0) {
-        echo json_encode(['success' => false, 'message' => 'Not logged in. Session: ' . json_encode($_SESSION)]);
-        break;
-    }
-        // This endpoint is called by the student-facing app, not by an admin.
-        // Authenticate via the student session instead of admin session.
-        // Adjust the session key to match your own student login logic.
-        $studentId = intval($_SESSION['student_id'] ?? 0);
-        if ($studentId === 0) {
-            echo json_encode(['success' => false, 'message' => 'Not logged in.']);
-            break;
-        }
-
-        $personality = strtoupper(trim($_POST['personality'] ?? ''));
-        $riasec      = json_decode($_POST['riasec'] ?? '{}', true);
-
-        $allowed = ['R','I','A','S','E','C'];
-        if (!in_array($personality, $allowed) || !is_array($riasec)) {
-            echo json_encode(['success' => false, 'message' => 'Invalid data.']);
-            break;
-        }
-
-        // Count existing attempts for this student
-        $countStmt = $conn->prepare("SELECT COUNT(*) AS c FROM student_attempts WHERE student_id = ?");
-        $countStmt->bind_param('i', $studentId);
-        $countStmt->execute();
-        $count = (int)$countStmt->get_result()->fetch_assoc()['c'];
-        $countStmt->close();
-
-        // If already at cap (3), delete the oldest attempt
-        if ($count >= 3) {
-            $delStmt = $conn->prepare(
-                "DELETE FROM student_attempts
-                 WHERE student_id = ?
-                 ORDER BY taken_at ASC
-                 LIMIT 1"
-            );
-            $delStmt->bind_param('i', $studentId);
-            $delStmt->execute();
-            $delStmt->close();
-        }
-
-        // Insert the new attempt
-        $r = (int)($riasec['R'] ?? 0);
-        $i = (int)($riasec['I'] ?? 0);
-        $a = (int)($riasec['A'] ?? 0);
-        $s = (int)($riasec['S'] ?? 0);
-        $e = (int)($riasec['E'] ?? 0);
-        $c = (int)($riasec['C'] ?? 0);
-
-        $ins = $conn->prepare(
-            "INSERT INTO student_attempts
-                (student_id, personality, score_r, score_i, score_a, score_s, score_e, score_c)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-        );
-        $ins->bind_param('isiiiiii', $studentId, $personality, $r, $i, $a, $s, $e, $c);
-
-        if ($ins->execute()) {
-            echo json_encode(['success' => true, 'message' => 'Attempt saved.']);
-        } else {
-            echo json_encode(['success' => false, 'message' => 'Database error.']);
-        }
-        $ins->close();
-        break;
 
     // ── DELETE STUDENT ─────────────────────────────────────────────────────────
     // student_attempts rows are removed automatically via ON DELETE CASCADE
