@@ -1,51 +1,47 @@
 <?php
-// admin_login.php
-header('Content-Type: application/json');
-session_start();
-require_once 'db_connect.php';
+declare(strict_types=1);
+
+header('Content-Type: application/json; charset=utf-8');
+
+require_once __DIR__ . '/session_bootstrap.php';
+require_once __DIR__ . '/db_connect.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    echo json_encode(['success' => false, 'message' => 'Invalid request.']);
+    http_response_code(405);
+    echo json_encode(['success' => false, 'message' => 'Method not allowed.']);
     exit;
 }
 
 $username = trim($_POST['username'] ?? '');
-$password =      $_POST['password'] ?? '';
+$password = $_POST['password'] ?? '';
 
-if (empty($username) || empty($password)) {
+if ($username === '' || $password === '') {
+    http_response_code(422);
     echo json_encode(['success' => false, 'message' => 'Please fill all fields.']);
     exit;
 }
 
-$stmt = $conn->prepare("SELECT id, username, password, role FROM admins WHERE username = ?");
+$stmt = $conn->prepare('SELECT id, username, password, role FROM admins WHERE username = ? LIMIT 1');
 $stmt->bind_param('s', $username);
 $stmt->execute();
-$result = $stmt->get_result();
-
-if ($result->num_rows === 0) {
-    echo json_encode(['success' => false, 'message' => 'Invalid credentials.']);
-    $stmt->close(); exit;
-}
-
-$admin = $result->fetch_assoc();
+$admin = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
-if (!password_verify($password, $admin['password'])) {
+if (!$admin || !password_verify($password, $admin['password'])) {
+    http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'Invalid credentials.']);
     exit;
 }
 
-// Set session with role
-$_SESSION['admin_id']       = $admin['id'];
+session_regenerate_id(true);
+
+$_SESSION['admin_id'] = (int) $admin['id'];
 $_SESSION['admin_username'] = $admin['username'];
-$_SESSION['admin_role']     = $admin['role'];
-$_SESSION['is_admin']       = true;
+$_SESSION['admin_role'] = $admin['role'];
+$_SESSION['is_admin'] = true;
 
 echo json_encode([
-    'success'  => true,
-    'role'     => $admin['role'],
+    'success' => true,
+    'role' => $admin['role'],
     'redirect' => 'admin.html'
 ]);
-
-$conn->close();
-?>
