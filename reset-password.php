@@ -1,59 +1,71 @@
 <?php
-/**
- * reset-password.php
- * Validates the token from the email link and lets the user set a new password.
- */
+declare(strict_types=1);
 
-$db_host = 'localhost';
-$db_name = 'coursematch_db';
-$db_user = 'root';
-$db_pass = '';
+require_once __DIR__ . '/db_connect.php';
 
-$token      = trim($_GET['token'] ?? '');
-$email      = trim($_GET['email'] ?? '');
-$error      = '';
-$success    = false;
+$token = trim($_GET['token'] ?? '');
+$email = strtolower(trim($_GET['email'] ?? ''));
+$error = '';
+$success = false;
 $validToken = false;
 
-if ($token && $email) {
-    try {
-        $pdo = new PDO(
-            "mysql:host=$db_host;dbname=$db_name;charset=utf8",
-            $db_user, $db_pass,
-            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-        );
+if ($token !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    $tokenHash = hash('sha256', $token);
 
-        $token_hash = hash('sha256', $token);
-        $stmt = $pdo->prepare("SELECT * FROM password_resets WHERE email = ? AND token = ? AND expires_at > NOW() LIMIT 1");
-        $stmt->execute([$email, $token_hash]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $stmt = $conn->prepare(
+        'SELECT id FROM password_resets
+         WHERE email = ? AND token = ? AND expires_at > NOW()
+         LIMIT 1'
+    );
+    $stmt->bind_param('ss', $email, $tokenHash);
+    $stmt->execute();
+    $resetRow = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
 
-        if ($row) {
-            $validToken = true;
+    if ($resetRow) {
+        $validToken = true;
+    } else {
+        $error = 'This reset link is invalid or has expired. Please request a new one.';
+    }
+
+    if ($validToken && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $newPassword = $_POST['password'] ?? '';
+        $confirmPassword = $_POST['confirm_password'] ?? '';
+
+        if (strlen($newPassword) < 8) {
+            $error = 'Password must be at least 8 characters.';
+        } elseif (!preg_match('/[A-Z]/', $newPassword)) {
+            $error = 'Password must contain at least one uppercase letter.';
+        } elseif (!preg_match('/[0-9]/', $newPassword)) {
+            $error = 'Password must contain at least one number.';
+        } elseif (!preg_match('/[\\W_]/', $newPassword)) {
+            $error = 'Password must contain at least one special character.';
+        } elseif ($newPassword !== $confirmPassword) {
+            $error = 'Passwords do not match.';
         } else {
-            $error = 'This reset link is invalid or has expired. Please request a new one.';
-        }
+            $hashed = password_hash($newPassword, PASSWORD_DEFAULT);
 
-        // Handle form submission
-        if ($validToken && $_SERVER['REQUEST_METHOD'] === 'POST') {
-            $new_password     = $_POST['password'] ?? '';
-            $confirm_password = $_POST['confirm_password'] ?? '';
+            $conn->begin_transaction();
+            try {
+                $update = $conn->prepare('UPDATE students SET password = ? WHERE email = ?');
+                $update->bind_param('ss', $hashed, $email);
+                $update->execute();
+                $update->close();
 
-            if (strlen($new_password) < 8) {
-                $error = 'Password must be at least 8 characters.';
-            } elseif ($new_password !== $confirm_password) {
-                $error = 'Passwords do not match.';
-            } else {
-                $hashed = password_hash($new_password, PASSWORD_BCRYPT);
-                $pdo->prepare("UPDATE students SET password = ? WHERE email = ?")->execute([$hashed, $email]);
-                $pdo->prepare("DELETE FROM password_resets WHERE email = ?")->execute([$email]);
+                $delete = $conn->prepare('DELETE FROM password_resets WHERE email = ?');
+                $delete->bind_param('s', $email);
+                $delete->execute();
+                $delete->close();
+
+                $conn->commit();
                 $success = true;
                 $validToken = false;
+            } catch (Throwable $e) {
+                $conn->rollback();
+                error_log('CourseMatch password reset failed: ' . $e->getMessage());
+                $error = 'A server error occurred. Please try again.';
             }
         }
-
-    } catch (\Exception $e) {
-        $error = 'A server error occurred. Please try again.';
     }
 } else {
     $error = 'Invalid reset link. Please request a new one.';
