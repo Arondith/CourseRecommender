@@ -11,7 +11,7 @@ function requireAdmin() {
 
 function requireRole(array $roles) {
     requireAdmin();
-    if (!in_array($_SESSION['admin_role'], $roles)) {
+    if (!in_array($_SESSION['admin_role'], $roles, true)) {
         http_response_code(403);
         echo json_encode(['success' => false, 'message' => 'Access denied. Insufficient permissions.']);
         exit;
