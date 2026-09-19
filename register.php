@@ -1,7 +1,7 @@
 <?php
 // register.php
 header('Content-Type: application/json');
-session_start();
+require_once __DIR__ . '/session_bootstrap.php';
 require_once 'db_connect.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -68,7 +68,7 @@ if (!preg_match('/[\W_]/', $password)) {
 
 // --- Strand validation ---
 $allowed_strands = ['STEM', 'ABM', 'HUMSS'];
-if (!in_array($strand, $allowed_strands)) {
+if (!in_array($strand, $allowed_strands, true)) {
     echo json_encode(['success' => false, 'message' => 'Invalid strand selected.']);
     exit;
 }
@@ -97,7 +97,7 @@ $stmt->close();
 
 // --- Build full name & hash password ---
 $full_name = trim("$first_name $middle_name $last_name");
-$hashed    = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
+$hashed    = password_hash($password, PASSWORD_DEFAULT);
 
 // --- Insert ---
 $stmt = $conn->prepare("
