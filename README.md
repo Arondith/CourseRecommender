@@ -1,73 +1,176 @@
-# CourseRecommender
+# CourseMatch
 
-## About
+CourseMatch is a PHP/MySQL web application that helps students explore college programs through a **30-question RIASEC interest assessment**. It combines student authentication, assessment history, program-fit scoring, password recovery, and an administrative dashboard in one multi-role system.
 
-A **web-based academic course recommendation and administration system** built with HTML, PHP, JavaScript, and a database-backed authentication flow. The project combines a student-facing recommendation experience with administrative controls for managing access, viewing information, and supporting reporting.
+## Highlights
 
-Users can register, log in, recover account access, open a dashboard, and move through the course-recommendation workflow. The system also includes a separate **administrator login and dashboard**, authentication checks, session handling, database connectivity, API-style backend logic, and chart/reporting components. The project demonstrates how a front-end interface connects to PHP application logic and persistent database data in a multi-role web system.
-
-## Core features
-
-- User registration and login
-- Password recovery interface
-- User dashboard
-- Course recommendation workflow
-- Separate administrator login
-- Administrative dashboard
-- Authentication checks and protected access
-- Session handling
-- PHP backend/API logic
-- Database connection and persistent data
-- Charts and reporting support
-- Responsive web interface
-
-## Project structure
-
-Key files include:
-
-- `index.html` — main entry page
-- `register.html` / `register.php` — user registration
-- `login.php` — user authentication
-- `dashboard.html` — user dashboard
-- `admin-login.html` / `admin_login.php` — administrator authentication
-- `admin.html` / `admin_api.php` — administrative interface and API logic
-- `auth_check.php` — authentication validation
-- `db_connect.php` — database connection setup
-- `chart.js` — charting library used by the project
-- `images/` — image assets
+- 30-question RIASEC assessment covering Realistic, Investigative, Artistic, Social, Enterprising, and Conventional interests
+- Draft assessment progress survives page refreshes during the current browser session
+- Server-backed student sessions and assessment history
+- Ranked program recommendations with a radar profile, trait breakdown, and explainable fit scores
+- Student registration, login, logout, password reset, and account recovery
+- Role-based administrator dashboard
+- Up to three stored assessment attempts per student
+- Responsive student UI with desktop sidebar and mobile bottom navigation
+- Environment-based configuration so database and mail credentials are not stored in source files
+- Reproducible SQL schema included in the repository
 
 ## Technology
 
-- HTML
-- CSS
-- JavaScript
+- HTML5 and CSS3
+- Vanilla JavaScript
 - PHP
-- Database-backed authentication
-- Sessions and access control
-- Chart/reporting components
+- MySQL / MariaDB
+- Chart.js
+- PHPMailer
 
-## Running locally
+## Project structure
 
-1. Clone or download the repository.
-2. Place the project in a PHP-capable local web server environment such as XAMPP, WAMP, or Laragon.
-3. Start the web server and MySQL/MariaDB service.
-4. Create a local database named `coursematch_db`, which matches the default database name configured in `db_connect.php`.
-5. If your local database username, password, host, or database name differs from the defaults, update the corresponding values in `db_connect.php` before running the application.
-6. Import or create the database tables required by your local copy of the project.
-7. Open the project through your local server URL rather than opening the HTML/PHP files directly from the filesystem.
+```text
+CourseRecommender/
+├── index.html              # Student sign in
+├── register.html           # Student registration
+├── dashboard.html          # RIASEC assessment
+├── result.html             # Profile and recommendations
+├── admin.html              # Administrator dashboard
+├── script.js               # Shared auth/API helpers
+├── assessment.js           # Assessment state and draft persistence
+├── recommender.js          # Program-fit scoring engine
+├── results.js              # Results rendering
+├── modern.css              # Modern student UI layer
+├── student_api.php         # Authenticated student session/attempt API
+├── admin_api.php           # Role-protected administration API
+├── session_bootstrap.php   # Shared secure session configuration
+├── config.php              # Environment configuration loader
+├── db_connect.php          # Centralized database connection
+├── send-reset.php          # Password reset email flow
+├── reset-password.php      # Token validation and password update
+├── database/
+│   └── schema.sql          # Database schema
+├── src/                    # PHPMailer source
+├── .env.example            # Local configuration template
+└── .gitignore
+```
 
-### Default local database configuration
+## Recommendation model
 
-The repository currently expects the common local-development defaults below:
+Each RIASEC trait contains five questions scored from **1 to 5**, producing a raw trait score from **5 to 25**.
 
-- Host: `localhost`
-- User: `root`
-- Password: empty
-- Database: `coursematch_db`
-- Character set: `utf8mb4`
+The recommendation engine normalizes the six trait scores and compares the resulting student profile with a weighted trait profile for each program. The current fit score combines:
 
-These values are suitable only as local-development defaults. Use environment-appropriate credentials and avoid committing production passwords or other secrets to the repository.
+- 45% profile-shape similarity
+- 30% ranked-trait similarity
+- 25% absolute trait fit
 
-## Notes
+Programs whose primary trait is substantially below the student's profile receive a penalty. The result is a **CourseMatch profile-fit score**, not an admission probability, aptitude test result, or guarantee of career success.
 
-This repository is an academic/software project. Review database credentials and environment-specific settings before deploying it publicly.
+## Local setup
+
+### 1. Clone the project
+
+```bash
+git clone https://github.com/Arondith/CourseRecommender.git
+cd CourseRecommender
+```
+
+### 2. Configure the environment
+
+Copy the example file:
+
+```bash
+cp .env.example .env
+```
+
+On Windows you can duplicate `.env.example` and rename the copy to `.env`.
+
+Update the database values in `.env`. If you want password-reset emails to work, also configure the mail variables.
+
+```env
+APP_URL=http://localhost/CourseRecommender
+
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=coursematch_db
+DB_USER=root
+DB_PASS=
+
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=your-email@example.com
+MAIL_PASSWORD=your-app-password
+MAIL_FROM_ADDRESS=your-email@example.com
+MAIL_FROM_NAME=CourseMatch
+```
+
+Never commit your real `.env` file.
+
+### 3. Create the database
+
+Start MySQL/MariaDB through XAMPP, WAMP, or Laragon and import:
+
+```text
+database/schema.sql
+```
+
+The schema creates the required:
+
+- `students`
+- `admins`
+- `student_attempts`
+- `password_resets`
+
+tables.
+
+### 4. Run through a PHP web server
+
+Place the repository inside your local server's web root, start Apache and MySQL, then open the project through an HTTP URL such as:
+
+```text
+http://localhost/CourseRecommender/
+```
+
+Do not open the HTML files directly with `file://`, because authentication and persistence depend on PHP sessions and API requests.
+
+## Administrator setup
+
+Administrator passwords must be stored as PHP password hashes, never plain text.
+
+Generate a hash locally:
+
+```bash
+php -r "echo password_hash('CHANGE_THIS_PASSWORD', PASSWORD_DEFAULT), PHP_EOL;"
+```
+
+Then insert the generated hash into the `admins` table with one of these roles:
+
+- `superadmin`
+- `moderator`
+- `viewer`
+
+Change or remove any bootstrap credentials after setup.
+
+## Security notes
+
+The current codebase includes several safeguards suitable for a student/portfolio project:
+
+- Secrets are loaded from environment configuration
+- `.env` is ignored by Git
+- Session cookies use HttpOnly, SameSite, and strict-mode session settings
+- Session IDs regenerate after successful login
+- Database connection errors are logged server-side instead of exposing raw DB details
+- Student assessment writes are separated from the admin API
+- RIASEC scores are validated server-side before storage
+- Password-reset tokens are random, stored as SHA-256 hashes, expire after one hour, and are deleted after use
+- Login failures use generic credential messages
+
+For a public production deployment, add HTTPS-only cookies, CSRF tokens, request throttling/rate limiting, dependency management through Composer, automated tests, and production-grade monitoring.
+
+> Removing a credential from the current branch does not remove it from Git history. If a real secret was ever committed, revoke/rotate it with the provider.
+
+## Design direction
+
+The refreshed student experience uses a shared responsive design system across sign-in, registration, assessment, recommendations, and password recovery. The admin interface remains intentionally information-dense while the student side prioritizes clarity, progress, and mobile usability.
+
+## Development note
+
+CourseMatch is an educational software project. Program availability and admission requirements can change, so the recommendation data should be reviewed against the institution's current official program list before real-world deployment.
