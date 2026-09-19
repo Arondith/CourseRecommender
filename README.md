@@ -19,13 +19,22 @@ CourseMatch is a PHP/MySQL web application that helps students explore college p
 ## Project preview
 
 ### Login
+
 ![CourseMatch Login](images/loginCoursematch.png)
 
+The student login connects to the PHP authentication flow, verifies the user's email and hashed password, creates a server-side session, and redirects authenticated students to the assessment dashboard. The interface also provides access to registration, password recovery, and a separate administrator sign-in.
+
 ### Assessment
+
 ![CourseMatch Assessment](images/project-preview-assessment.jpg)
 
+The assessment contains **30 RIASEC questions** — five each for Realistic, Investigative, Artistic, Social, Enterprising, and Conventional interests. Students answer using a **1–5 Likert scale**. Question order is randomized, unfinished progress is preserved in the browser session, and the completed six-trait score is validated and stored through the authenticated student API.
+
 ### Career Report
+
 ![CourseMatch Career Report](images/project-preview-results.jpg)
+
+The report turns the six RIASEC scores into a **top-three interest profile**, trait breakdown, and radar chart. CourseMatch compares that profile with **33 coded degree programs across four colleges** and displays the **top six program matches**. The recommendation score combines profile-shape similarity, ranked-trait similarity, and absolute trait fit; it is presented as a guidance score rather than an admission probability.
 
 ## Technology
 
