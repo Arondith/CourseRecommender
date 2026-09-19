@@ -6,7 +6,7 @@ header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/session_bootstrap.php';
 require_once __DIR__ . '/db_connect.php';
 
-function respond(array $payload, int $status = 200): never
+function respond(array $payload, int $status = 200): void
 {
     http_response_code($status);
     echo json_encode($payload);
@@ -146,16 +146,23 @@ if ($action === 'save_attempt') {
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
         );
 
+        $r = $scores['R'];
+        $i = $scores['I'];
+        $a = $scores['A'];
+        $s = $scores['S'];
+        $e = $scores['E'];
+        $c = $scores['C'];
+
         $insertStmt->bind_param(
             'isiiiiii',
             $studentId,
             $personality,
-            $scores['R'],
-            $scores['I'],
-            $scores['A'],
-            $scores['S'],
-            $scores['E'],
-            $scores['C']
+            $r,
+            $i,
+            $a,
+            $s,
+            $e,
+            $c
         );
         $insertStmt->execute();
         $insertStmt->close();
