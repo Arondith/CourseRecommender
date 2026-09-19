@@ -1,111 +1,96 @@
 <?php
-ini_set('display_errors', 0);
-date_default_timezone_set('Asia/Manila'); // Set to Philippines timezone
-header('Content-Type: application/json');
+declare(strict_types=1);
 
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\SMTP;
+ini_set('display_errors', '0');
+header('Content-Type: application/json; charset=utf-8');
+
 use PHPMailer\PHPMailer\Exception;
+use PHPMailer\PHPMailer\PHPMailer;
 
-if (!file_exists(__DIR__ . '/src/PHPMailer.php')) {
-    echo json_encode(['success' => false, 'message' => 'PHPMailer src/ folder not found.']);
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/db_connect.php';
+require_once __DIR__ . '/src/Exception.php';
+require_once __DIR__ . '/src/PHPMailer.php';
+require_once __DIR__ . '/src/SMTP.php';
+
+function resetResponse(bool $success, string $message = ''): never
+{
+    echo json_encode([
+        'success' => $success,
+        'message' => $message
+    ]);
     exit;
 }
 
-require __DIR__ . '/src/Exception.php';
-require __DIR__ . '/src/PHPMailer.php';
-require __DIR__ . '/src/SMTP.php';
+$email = strtolower(trim($_POST['email'] ?? ''));
 
-// ── Config ────────────────────────────────────────────────
-$db_host        = 'localhost';
-$db_name        = 'coursematch_db';
-$db_user        = 'root';
-$db_pass        = '';
-$gmail_address  = 'aronditee@gmail.com';
-$gmail_password = 'mtmv okfm vftu mxhe';
-$from_name      = 'CourseMatch';
-$base_url       = 'http://localhost/Course-Recommender-main/Course-Recommender-main/CourseRecommender';
-// ─────────────────────────────────────────────────────────
-
-$email = trim($_POST['email'] ?? '');
-
-if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    echo json_encode(['success' => false, 'message' => 'Invalid email address.']);
-    exit;
+if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    resetResponse(false, 'Enter a valid email address.');
 }
 
-try {
-    $pdo = new PDO(
-        "mysql:host=$db_host;dbname=$db_name;charset=utf8",
-        $db_user, $db_pass,
-        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-    );
+$stmt = $conn->prepare('SELECT first_name FROM students WHERE email = ? LIMIT 1');
+$stmt->bind_param('s', $email);
+$stmt->execute();
+$student = $stmt->get_result()->fetch_assoc();
+$stmt->close();
 
-    $stmt = $pdo->prepare("SELECT id, first_name FROM students WHERE email = ? LIMIT 1");
-    $stmt->execute([$email]);
-    $student = $stmt->fetch(PDO::FETCH_ASSOC);
+// Do not reveal whether an email is registered.
+if (!$student) {
+    resetResponse(true, 'If that email exists, a reset link has been sent.');
+}
 
-    if (!$student) {
-        // Return success anyway to avoid revealing which emails are registered
-        echo json_encode(['success' => true]);
-        exit;
-    }
+if (MAIL_USERNAME === '' || MAIL_PASSWORD === '') {
+    error_log('CourseMatch mail is not configured. Set MAIL_USERNAME and MAIL_PASSWORD.');
+    http_response_code(500);
+    resetResponse(false, 'Password reset email is not configured yet.');
+}
 
-    $token      = bin2hex(random_bytes(32));
-    $token_hash = hash('sha256', $token);
-    
+$token = bin2hex(random_bytes(32));
+$tokenHash = hash('sha256', $token);
 
-    $pdo->prepare("DELETE FROM password_resets WHERE email = ?")->execute([$email]);
-    $pdo->prepare("INSERT INTO password_resets (email, token, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 1 HOUR))")
-        ->execute([$email, $token_hash]);
+$delete = $conn->prepare('DELETE FROM password_resets WHERE email = ?');
+$delete->bind_param('s', $email);
+$delete->execute();
+$delete->close();
 
-    $reset_link = "$base_url/reset-password.php?token=$token&email=" . urlencode($email);
-    $first_name = htmlspecialchars($student['first_name']);
+$insert = $conn->prepare(
+    'INSERT INTO password_resets (email, token, expires_at)
+     VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 1 HOUR))'
+);
+$insert->bind_param('ss', $email, $tokenHash);
+$insert->execute();
+$insert->close();
 
-    $html = <<<HTML
+$resetLink = APP_URL . '/reset-password.php?token=' . urlencode($token) . '&email=' . urlencode($email);
+$firstNameText = $student['first_name'] ?: 'there';
+$firstNameHtml = htmlspecialchars($firstNameText, ENT_QUOTES, 'UTF-8');
+$resetLinkHtml = htmlspecialchars($resetLink, ENT_QUOTES, 'UTF-8');
+
+$html = <<<HTML
 <!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background:#f0f2ff;font-family:'Segoe UI',Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f2ff;padding:40px 0;">
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f5f7ff;font-family:Arial,sans-serif;color:#182034">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 16px;background:#f5f7ff">
     <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 8px 32px rgba(100,60,180,0.12);">
-        <tr>
-          <td style="background:linear-gradient(135deg,#667eea,#764ba2);padding:40px 48px;text-align:center;">
-            <div style="font-size:36px;margin-bottom:10px;">&#128273;</div>
-            <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;">Password Reset</h1>
-            <p style="margin:8px 0 0;color:rgba(255,255,255,0.8);font-size:14px;">CourseMatch Account Security</p>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:40px 48px;">
-            <p style="margin:0 0 16px;font-size:16px;color:#1a1a2e;">Hi <strong>{$first_name}</strong>!</p>
-            <p style="margin:0 0 24px;font-size:14px;color:#555577;line-height:1.7;">
-              We received a request to reset your CourseMatch password.
-              Click the button below to choose a new password. This link expires in <strong>1 hour</strong>.
-            </p>
-            <table width="100%" cellpadding="0" cellspacing="0">
-              <tr>
-                <td align="center" style="padding:8px 0 28px;">
-                  <a href="{$reset_link}" style="display:inline-block;padding:14px 36px;background:linear-gradient(135deg,#667eea,#764ba2);color:#ffffff;text-decoration:none;border-radius:10px;font-size:15px;font-weight:700;">
-                    Reset My Password
-                  </a>
-                </td>
-              </tr>
-            </table>
-            <p style="margin:0 0 8px;font-size:13px;color:#8888aa;">Or copy this link into your browser:</p>
-            <p style="margin:0 0 28px;font-size:12px;color:#667eea;word-break:break-all;">{$reset_link}</p>
-            <hr style="border:none;border-top:1px solid #eef0ff;margin:0 0 24px;">
-            <p style="margin:0;font-size:13px;color:#aaaacc;line-height:1.6;">
-              If you didn't request this, you can safely ignore this email.
-            </p>
-          </td>
-        </tr>
-        <tr>
-          <td style="background:#f7f8ff;padding:24px 48px;text-align:center;">
-            <p style="margin:0;font-size:12px;color:#aaaacc;">&copy; 2025 CourseMatch &middot; Sent to {$email}</p>
-          </td>
-        </tr>
+      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#fff;border-radius:18px;overflow:hidden">
+        <tr><td style="padding:34px 40px;background:#5b5bd6;color:#fff">
+          <h1 style="margin:0;font-size:24px">Reset your CourseMatch password</h1>
+        </td></tr>
+        <tr><td style="padding:36px 40px">
+          <p style="margin:0 0 16px">Hi <strong>{$firstNameHtml}</strong>,</p>
+          <p style="margin:0 0 24px;line-height:1.6;color:#59617a">
+            We received a request to reset your password. This link expires in one hour.
+          </p>
+          <p style="text-align:center;margin:0 0 28px">
+            <a href="{$resetLinkHtml}" style="display:inline-block;padding:13px 24px;background:#5b5bd6;color:#fff;text-decoration:none;border-radius:10px;font-weight:700">
+              Reset password
+            </a>
+          </p>
+          <p style="margin:0;color:#7b8298;font-size:13px;line-height:1.6">
+            If you did not request this, you can safely ignore this email.
+          </p>
+        </td></tr>
       </table>
     </td></tr>
   </table>
@@ -113,37 +98,27 @@ try {
 </html>
 HTML;
 
+try {
     $mail = new PHPMailer(true);
     $mail->isSMTP();
-    $mail->Host       = 'smtp.gmail.com';
-    $mail->SMTPAuth   = true;
-    $mail->Username   = $gmail_address;
-    $mail->Password   = $gmail_password;
+    $mail->Host = MAIL_HOST;
+    $mail->SMTPAuth = true;
+    $mail->Username = MAIL_USERNAME;
+    $mail->Password = MAIL_PASSWORD;
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-    $mail->Port       = 587;
+    $mail->Port = MAIL_PORT;
 
-    // Fix SSL certificate error on XAMPP localhost
-    $mail->SMTPOptions = [
-        'ssl' => [
-            'verify_peer'       => false,
-            'verify_peer_name'  => false,
-            'allow_self_signed' => true,
-        ]
-    ];
-
-    $mail->setFrom($gmail_address, $from_name);
-    $mail->addAddress($email, $first_name);
+    $mail->setFrom(MAIL_FROM_ADDRESS, MAIL_FROM_NAME);
+    $mail->addAddress($email, $firstNameText);
     $mail->isHTML(true);
-    $mail->Subject = 'Reset Your CourseMatch Password';
-    $mail->Body    = $html;
-    $mail->AltBody = "Hi $first_name, reset your password here: $reset_link (expires in 1 hour)";
-
+    $mail->Subject = 'Reset your CourseMatch password';
+    $mail->Body = $html;
+    $mail->AltBody = "Reset your CourseMatch password: {$resetLink} (expires in one hour).";
     $mail->send();
 
-    echo json_encode(['success' => true]);
-
+    resetResponse(true, 'If that email exists, a reset link has been sent.');
 } catch (Exception $e) {
-    echo json_encode(['success' => false, 'message' => 'Mailer error: ' . $e->getMessage()]);
-} catch (\Exception $e) {
-    echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
+    error_log('CourseMatch mailer error: ' . $e->getMessage());
+    http_response_code(500);
+    resetResponse(false, 'Unable to send the reset email right now.');
 }
